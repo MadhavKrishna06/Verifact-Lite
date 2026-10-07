@@ -21,3 +21,8 @@ models/
 
 .pytest_cache/
 .DS_Store
+
+# Node tooling for the presentation generator
+node_modules/
+package-lock.json
+presentation/render/
