@@ -360,8 +360,20 @@ const CHART_BASE = {
 /* ----------------------------------------------------------------- slides
  * 15 slides, paced for a 15-minute talk (~15:00 of content).
  * Per-slide timings are the first line of each slide's speaker notes.
- * Three appendix slides follow slide 15 for the question period; they are not
- * part of the 15 minutes and can be deleted without touching the talk.
+ *
+ * Flow (problem -> paper -> reproduction -> our contribution -> next steps):
+ *    1      title
+ *    2      the problem
+ *    3      the solution: VeriFact
+ *    4      how VeriFact works
+ *    5-9    recreating the results, 1..5
+ *   10-12   our contribution, 1..3
+ *   13      comparison with the paper
+ *   14      future plans and next steps
+ *   15      thank you
+ *
+ * Four appendix slides follow for the question period; they are not part of
+ * the 15 minutes and can be deleted without touching the talk.
  *
  * Numbers come from three runs over the SAME 12 generated answers:
  *   laptop-3B   Qwen2.5-3B primary, Qwen2.5-3B + Llama-3.2-3B judges
@@ -369,15 +381,45 @@ const CHART_BASE = {
  *   full-7B     Qwen2.5-7B primary, Qwen2.5-7B + Llama-3.1-8B judges   (Colab T4)
  * -------------------------------------------------------------------------- */
 
+/** Descriptor line under a slide title. */
+function subtitle(slide, text, dark) {
+  slide.addText(text, {
+    isTextBox: true,
+    objectName: "subtitle",
+    x: 0.6,
+    y: 1.14,
+    w: 12.1,
+    h: 0.32,
+    fontSize: 15,
+    color: dark ? LGRAY : MGRAY,
+    fontFace: "Arial",
+    valign: "middle",
+    margin: 0,
+  });
+}
+
 /* 1 — title  [0:20] */
 pres.addSection({ title: "Talk" });
 let s = pres.addSlide({ masterName: "TITLE_DARK", sectionTitle: "Talk" });
-coverEyebrow(s, "Paper reimplementation");
+coverEyebrow(s, "Paper reimplementation  ·  Neural Networks");
 coverTitle(s, "VERIFACT-Lite");
 coverBody(
   s,
-  "A resource-constrained reimplementation of the core VeriFact methodology using open-source, locally hosted models"
+  "Reproducing a context-preserving fact-verification pipeline with open-source, locally hosted models"
 );
+s.addText("By:  Madhav Krishna", {
+  isTextBox: true,
+  objectName: "cover-by",
+  x: 0.75,
+  y: 4.6,
+  w: 9.9,
+  h: 0.36,
+  fontSize: 15,
+  bold: true,
+  color: WHITE,
+  fontFace: "Arial",
+  margin: 0,
+});
 [
   ["Qwen2.5-3B to Llama-3.1-8B", 0.75],
   ["Q4_K_M, 4 GB GPU and a T4", 4.1],
@@ -387,7 +429,7 @@ coverBody(
   s.addShape(pres.ShapeType.roundRect, {
     objectName: "chip" + i,
     x,
-    y: 5.25,
+    y: 5.35,
     w: t.length * 0.105 + 0.5,
     h: 0.46,
     rectRadius: 0.23,
@@ -398,7 +440,7 @@ coverBody(
     isTextBox: true,
     objectName: "chip-t" + i,
     x,
-    y: 5.25,
+    y: 5.35,
     w: t.length * 0.105 + 0.5,
     h: 0.46,
     fontSize: 12,
@@ -428,14 +470,15 @@ s.addNotes(
 
 /* 2 — the problem  [1:20] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "The problem VeriFact solves");
+eyebrow(s, "The problem");
 title(s, "Atomic facts lose the context that makes them true", false);
+subtitle(s, "The challenge of context-free fact verification", false);
 s.addShape(pres.ShapeType.roundRect, {
   objectName: "quote-box",
   x: 0.6,
-  y: 1.3,
+  y: 1.58,
   w: 12.1,
-  h: 0.95,
+  h: 0.82,
   rectRadius: 0.06,
   fill: { color: LGRAY },
   line: { color: LGRAY, width: 1 },
@@ -445,25 +488,25 @@ s.addText(
     { text: "Model answer:  ", options: { bold: true, color: MGRAY, fontSize: 12 } },
     {
       text: '"If the demand for gold as jewelry were to disappear, the price of gold could drop by 20–50% or more, ',
-      options: { color: BLACK, fontSize: 15 },
+      options: { color: BLACK, fontSize: 14 },
     },
-    { text: "making", options: { color: SCARLET, bold: true, fontSize: 15 } },
-    { text: ' it more competitive with other materials like copper and silver."', options: { color: BLACK, fontSize: 15 } },
+    { text: "making", options: { color: SCARLET, bold: true, fontSize: 14 } },
+    { text: ' it more competitive with other materials like copper and silver."', options: { color: BLACK, fontSize: 14 } },
   ],
   {
     isTextBox: true,
     objectName: "quote-text",
     x: 0.85,
-    y: 1.4,
+    y: 1.66,
     w: 11.6,
-    h: 0.75,
+    h: 0.66,
     fontFace: "Arial",
-    lineSpacingMultiple: 1.15,
+    lineSpacingMultiple: 1.12,
     margin: 0,
     valign: "middle",
   }
 );
-card(s, { name: "safe", x: 0.6, y: 2.45, w: 6.0, h: 2.55, heading: "Extracted by SAFE", headingColor: DGRAY, body: "" });
+card(s, { name: "safe", x: 0.6, y: 2.52, w: 6.0, h: 2.5, heading: "Extracted by SAFE", headingColor: DGRAY, body: "" });
 s.addText(
   [
     { text: "There is a demand for gold as jewelry.", options: { bullet: true, breakLine: true } },
@@ -472,9 +515,9 @@ s.addText(
     { text: "Copper and silver are competitive with gold in price.", options: { bullet: true, breakLine: true } },
     { text: "stated unconditionally; the causal link in “making” is never extracted", options: { color: SCARLET, bold: true, fontSize: 11 } },
   ],
-  { isTextBox: true, objectName: "safe-list", x: 0.86, y: 2.98, w: 5.5, h: 1.9, fontSize: 13, color: DGRAY, fontFace: "Arial", paraSpaceAfter: 4, margin: 0 }
+  { isTextBox: true, objectName: "safe-list", x: 0.86, y: 3.05, w: 5.5, h: 1.85, fontSize: 13, color: DGRAY, fontFace: "Arial", paraSpaceAfter: 4, margin: 0 }
 );
-card(s, { name: "vf", x: 6.95, y: 2.45, w: 5.75, h: 2.55, line: SCARLET, lineWidth: 1.5, heading: "Extracted by VeriFact", headingColor: SCARLET, body: "" });
+card(s, { name: "vf", x: 6.95, y: 2.52, w: 5.75, h: 2.5, line: SCARLET, lineWidth: 1.5, heading: "Extracted by VeriFact", headingColor: SCARLET, body: "" });
 s.addText(
   [
     { text: "There is a demand for gold as jewelry.", options: { bullet: true, breakLine: true } },
@@ -482,7 +525,7 @@ s.addText(
     { text: "A 20–50% drop in the price of gold could make copper and silver competitive with gold.", options: { bullet: true, breakLine: true } },
     { text: "condition preserved, causal relation recovered as its own fact", options: { color: SCARLET, bold: true, fontSize: 11 } },
   ],
-  { isTextBox: true, objectName: "vf-list", x: 7.21, y: 2.98, w: 5.25, h: 1.9, fontSize: 13, color: DGRAY, fontFace: "Arial", paraSpaceAfter: 4, margin: 0 }
+  { isTextBox: true, objectName: "vf-list", x: 7.21, y: 3.05, w: 5.25, h: 1.85, fontSize: 13, color: DGRAY, fontFace: "Arial", paraSpaceAfter: 4, margin: 0 }
 );
 stat(s, { name: "p1", x: 0.6, y: 5.2, w: 3.9, h: 1.25, label: "Incomplete facts in SAFE", value: "12.68%", foot: "451 facts, human-annotated", valueColor: SCARLET, valueSize: 26 });
 stat(s, { name: "p2", x: 4.7, y: 5.2, w: 3.9, h: 1.25, label: "Missing facts per response", value: "1.24", foot: "relations never extracted", valueColor: SCARLET, valueSize: 26 });
@@ -492,10 +535,58 @@ s.addNotes(
   "[1:20] This example is the whole paper. Verifying the stripped claim gives a meaningless verdict, because it is not what the answer said. Read the two fact lists side by side, then point at the three numbers: measured on human annotation, not anecdote."
 );
 
-/* 3 — methodology  [1:15] */
+/* 3 — the solution  [0:50] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "How the paper works");
+eyebrow(s, "The solution");
+title(s, "VeriFact — repair the facts before verifying them", false);
+subtitle(s, "Preserving context instead of accepting what decomposition left behind", false);
+[
+  [
+    "What VeriFact is",
+    "A factuality framework that inserts two steps between decomposition and verification: detect broken facts, then repair them. The extractor and the verifier are inherited unchanged.",
+  ],
+  [
+    "The two defects it targets",
+    "Incomplete facts — an ambiguous reference, a dropped condition, a missing comparison target. And missing facts — an inter-sentence temporal or causal relation that no atomic fact carries.",
+  ],
+  [
+    "The trade it makes",
+    "Detection recalls 0.89 of incomplete and 0.85 of missing facts. One LLM agrees with human annotators at only κ = 0.33, so detections are unioned, not voted, and refinement absorbs the false positives.",
+  ],
+].forEach(([h, b], i) => {
+  card(s, { name: "sol" + i, x: 0.6 + i * 4.08, y: 1.58, w: 3.88, h: 2.45, heading: h, headingColor: SCARLET, headingSize: 15, body: b, bodySize: 12 });
+});
+s.addText("What the paper reports on FACTRBENCH", {
+  isTextBox: true,
+  objectName: "pr-h",
+  x: 0.6,
+  y: 4.2,
+  w: 12.1,
+  h: 0.3,
+  fontSize: 13,
+  bold: true,
+  color: DGRAY,
+  fontFace: "Arial",
+  margin: 0,
+});
+[
+  ["Incomplete facts", "56.7% → 22.5%", "SAFE, after refinement"],
+  ["Missing facts / response", "1.22 → 0.76", "−37%"],
+  ["Verdict changes", "24.9%", "supported ↓, contradicted ↑"],
+  ["Best F1 reported", "57.5", "Qwen 2.5-32B"],
+].forEach(([l, v, f], i) => {
+  stat(s, { name: "pr" + i, x: 0.6 + i * 3.08, y: 4.6, w: 2.88, h: 1.55, label: l, value: v, valueSize: 20, valueColor: i === 2 ? SCARLET : BLACK, foot: f });
+});
+note(s, "These are the paper's numbers, on 1,096 prompts with GPT-4o, Llama 3.3-70B and Qwen 2.5-32B. We do not attempt to match them.");
+s.addNotes(
+  "[0:50] Three sentences on what the framework is, then the bottom strip: this is what the paper claims. Say explicitly that the bottom row is the paper's, not ours — the rest of the talk is about which of these behaviours survive on free hardware."
+);
+
+/* 4 — how it works  [1:15] */
+s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
+eyebrow(s, "How VeriFact works");
 title(s, "Four steps, three judges, union of detections", false);
+subtitle(s, "Steps 2 and 3 are the paper's contribution; steps 1 and 4 are inherited", false);
 [
   ["1", "Decompose", "SAFE's extractor splits each sentence into atomic facts, then resolves vague references.", false],
   ["2", "Detect", "Judges flag incomplete facts by subtype, and missing temporal or contingency relations.", true],
@@ -505,9 +596,9 @@ title(s, "Four steps, three judges, union of detections", false);
   card(s, {
     name: "step" + n,
     x: 0.6 + i * 3.08,
-    y: 1.3,
+    y: 1.58,
     w: 2.88,
-    h: 2.45,
+    h: 2.4,
     badge: n,
     badgeFill: accent ? SCARLET : MGRAY,
     heading: h,
@@ -517,37 +608,55 @@ title(s, "Four steps, three judges, union of detections", false);
   });
 });
 card(s, {
-  name: "ensemble",
+  name: "detect",
   x: 0.6,
-  y: 4.0,
-  w: 8.3,
-  h: 2.4,
+  y: 4.2,
+  w: 6.0,
+  h: 2.2,
   fill: BLACK,
   line: BLACK,
-  heading: "The detection ensemble",
+  heading: "Detecting incomplete facts",
   headingColor: SCARLET,
+  headingSize: 14,
   body:
-    "GPT-4o + Llama 3.3-70B + Qwen 2.5-32B. Positive detections are unioned, not voted: one LLM agrees with human annotators at only κ = 0.33, so the paper trades precision for recall and lets refinement absorb the false positives.",
+    "Each fact is judged against the response it came from, and labelled with one of four subtypes: ambiguous concept or pronoun, missing comparison, omitted condition or source, other.",
   bodyColor: LGRAY,
+  bodySize: 12,
 });
-stat(s, { name: "r1", x: 9.25, y: 4.0, w: 1.65, h: 2.4, label: "Recall", value: "0.89", foot: "incomplete", fill: DGRAY, labelColor: LGRAY, valueColor: WHITE, footColor: LGRAY, valueSize: 26 });
-stat(s, { name: "r2", x: 11.05, y: 4.0, w: 1.65, h: 2.4, label: "Recall", value: "0.85", foot: "missing", fill: DGRAY, labelColor: LGRAY, valueColor: WHITE, footColor: LGRAY, valueSize: 26 });
-note(s, "Steps 2 and 3 are the paper's contribution. These 3 judges are the detection ensemble — not the 12 models the paper separately benchmarks.");
+card(s, {
+  name: "relate",
+  x: 6.95,
+  y: 4.2,
+  w: 5.75,
+  h: 2.2,
+  fill: BLACK,
+  line: SCARLET,
+  lineWidth: 1.5,
+  heading: "Detecting missing relations",
+  headingColor: SCARLET,
+  headingSize: 14,
+  body:
+    "Word mapping marks every response character covered by some fact. Each uncovered span is then asked two questions: does it express a temporal or contingency relation, and is it already captured by a single existing fact?",
+  bodyColor: LGRAY,
+  bodySize: 12,
+});
+note(s, "The three detection judges are GPT-4o + Llama 3.3-70B + Qwen 2.5-32B — not the 12 models the paper separately benchmarks.");
 s.addNotes(
-  "[1:15] Steps 1 and 4 are inherited from SAFE and FactCheck-GPT. Steps 2 and 3 are what is new. The union rule becomes important later: we test whether it is the right choice."
+  "[1:15] Walk the four boxes left to right in about thirty seconds. Spend the rest on the two bottom cards: these are the two mechanisms we reimplemented. The union rule matters later — we test whether it is the right choice."
 );
 
-/* 4 — substitutions  [1:00] */
+/* 5 — recreating 1/5: setting up  [1:00] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "What we changed");
-title(s, "Every paid component replaced by a free local one", false);
+eyebrow(s, "Recreating the results  ·  1 of 5");
+title(s, "Setting up the experiment", false);
+subtitle(s, "Every paid component replaced by a free local one", false);
 table(s, {
   name: "map",
   x: 0.6,
-  y: 1.3,
+  y: 1.58,
   w: 12.1,
   colW: [3.3, 4.4, 4.4],
-  rowH: 0.42,
+  rowH: 0.4,
   fontSize: 13,
   align: "left",
   head: ["Component", "Paper", "VERIFACT-Lite"],
@@ -556,32 +665,33 @@ table(s, {
     ["Extract / refine / verify", "Llama 3.3-70B-Instruct", "Qwen2.5-3B, and Qwen2.5-7B"],
     ["Evidence source", "Google Search via Serper (paid)", "Wikipedia API, cached for replay"],
     ["Evidence ranking", "cross-encoder reranker", "BM25 over retrieved paragraphs"],
-    ["Benchmark", "FactRBench, 1,096 prompts", "mini benchmark, 12 prompts"],
+    ["Benchmark", "FACTRBENCH, 1,096 prompts", "mini benchmark, 12 prompts"],
     ["Reference facts", "4 frontier LLMs + human answers", "86 facts, written and verified by hand"],
     ["Serving", "vLLM, multi-GPU", "Ollama on a 4 GB GTX 1650 and a Colab T4"],
   ],
 });
 [
-  ["Hardware", "4 GB + T4"],
-  ["API keys", "None"],
-  ["Total cost", "$0"],
-  ["Unit tests", "59 passing"],
-].forEach(([l, v], i) => {
-  stat(s, { name: "sc" + i, x: 0.6 + i * 3.08, y: 4.75, w: 2.88, h: 1.3, label: l, value: v, valueSize: 22, valueColor: i === 2 ? SCARLET : BLACK });
+  ["Questions", "12", "written for the failure modes"],
+  ["Reference facts", "86", "hand-written, sources recorded"],
+  ["API keys", "None", "no account, no quota"],
+  ["Total cost", "$0", "4 GB laptop GPU and free Colab"],
+].forEach(([l, v, f], i) => {
+  stat(s, { name: "sc" + i, x: 0.6 + i * 3.08, y: 4.85, w: 2.88, h: 1.4, label: l, value: v, valueSize: 24, valueColor: i === 3 ? SCARLET : BLACK, foot: f });
 });
-note(s, "All model names live in config.yaml; none is hard-coded. Backends: ollama, llama_cpp_server, llama_cpp_python.");
+note(s, "Reference facts are written from authoritative sources and deliberately not derived from the answer being evaluated. All model names live in config.yaml; none is hard-coded.");
 s.addNotes(
-  "[1:00] Do not read the table. Say: every paid or large component has a free local stand-in, the detection logic is unchanged, and the whole thing runs for nothing. Reference facts were written by hand from authoritative sources and deliberately not derived from the answer being evaluated."
+  "[1:00] Do not read the table. Say: every paid or large component has a free local stand-in, and the detection logic itself is unchanged. Then the bottom strip — twelve questions written to contain conditions, comparisons and event order, and an answer key written by hand before any run."
 );
 
-/* 5 — experimental design  [1:05] */
+/* 6 — recreating 2/5: the baseline  [0:55] */
 s = pres.addSlide({ masterName: "CONTENT_DARK", sectionTitle: "Talk" });
-eyebrow(s, "Experimental design", true);
-title(s, "One answer set, three model configurations", true);
+eyebrow(s, "Recreating the results  ·  2 of 5", true);
+title(s, "Generating the baseline", true);
+subtitle(s, "One answer set, scored two ways, so only refinement differs", true);
 s.addShape(pres.ShapeType.roundRect, {
   objectName: "gen-box",
   x: 2.6,
-  y: 1.3,
+  y: 1.6,
   w: 8.1,
   h: 0.56,
   rectRadius: 0.28,
@@ -592,7 +702,7 @@ s.addText("Question → local LLM generates the answer ONCE → reused by every 
   isTextBox: true,
   objectName: "gen-text",
   x: 2.6,
-  y: 1.3,
+  y: 1.6,
   w: 8.1,
   h: 0.56,
   fontSize: 14,
@@ -606,9 +716,9 @@ s.addText("Question → local LLM generates the answer ONCE → reused by every 
 card(s, {
   name: "base",
   x: 0.6,
-  y: 2.05,
+  y: 2.35,
   w: 5.95,
-  h: 1.95,
+  h: 1.6,
   fill: DGRAY,
   line: DGRAY,
   heading: "Baseline — variant A",
@@ -620,9 +730,9 @@ card(s, {
 card(s, {
   name: "vfl",
   x: 6.75,
-  y: 2.05,
+  y: 2.35,
   w: 5.95,
-  h: 1.95,
+  h: 1.6,
   fill: DGRAY,
   line: SCARLET,
   lineWidth: 1.5,
@@ -632,58 +742,27 @@ card(s, {
   bodyColor: LGRAY,
   bodySize: 14,
 });
-table(s, {
-  name: "configs",
-  x: 0.6,
-  y: 4.25,
-  w: 12.1,
-  colW: [2.6, 3.3, 3.6, 2.6],
-  rowH: 0.42,
-  fontSize: 12,
-  align: "left",
-  head: ["Run", "Primary model", "Judges", "Hardware"],
-  rows: [
-    ["laptop-3B", "Qwen2.5-3B", "Qwen2.5-3B + Llama-3.2-3B", "GTX 1650, 4 GB"],
-    ["judges-7B", "Qwen2.5-3B (unchanged)", "Qwen2.5-7B + Llama-3.1-8B", "Colab T4, 16 GB"],
-    ["full-7B", "Qwen2.5-7B", "Qwen2.5-7B + Llama-3.1-8B", "Colab T4, 16 GB"],
-  ],
-});
-note(s, "judges-7B changes only the judges, so its baseline fact set is byte-identical to laptop-3B. full-7B changes four things at once.");
-s.addNotes(
-  "[1:05] The key methodological point, twice over. One: the answer is generated once, so baseline and VeriFact differ only in whether refinement runs. Two: judges-7B replays extraction from cache, so its baseline is identical and the judge upgrade is isolated. full-7B is a different system, not a reproduction."
-);
-
-/* 6 — benchmark and metrics  [0:40] */
-s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "The mini benchmark");
-title(s, "12 questions chosen to contain the failure modes", false);
-[
-  ["Question design", "Each prompt invites conditions, comparisons, event order or cause and effect. Gold and jewelry, aluminium vs silver, Chernobyl, Panama Canal, Concorde, sea ice."],
-  ["Reference facts", "86 facts, 3–8 per question, written by hand from authoritative sources and not derived from the answer being evaluated. Sources recorded in the JSONL."],
-  ["Answers", "One paragraph per question from Qwen2.5-3B, generated once and shared by all three runs — verified byte-identical."],
-].forEach(([h, b], i) => {
-  card(s, { name: "bm" + i, x: 0.6 + i * 4.08, y: 1.3, w: 3.88, h: 2.3, heading: h, body: b, bodySize: 12 });
-});
 [
   ["Precision", "Supported facts ÷ all extracted facts. Undecided is reported separately and never counted as support."],
-  ["Recall", "Reference facts entailed by the answer ÷ all reference facts. It scores the answer, so refinement cannot move it."],
-  ["Incomplete rate", "Measured by one designated judge, while refinement is driven by the ensemble — facts are not scored by the rule that selected them."],
+  ["Recall", "Reference facts entailed by the answer ÷ all 86 reference facts. It scores the answer, so refinement cannot move it."],
+  ["Incomplete rate", "Measured by one designated judge while refinement is driven by the ensemble — facts are never scored by the rule that selected them."],
 ].forEach(([h, b], i) => {
-  card(s, { name: "met" + i, x: 0.6 + i * 4.08, y: 3.85, w: 3.88, h: 2.45, fill: BLACK, line: BLACK, heading: h, headingColor: SCARLET, body: b, bodyColor: LGRAY, bodySize: 12 });
+  card(s, { name: "met" + i, x: 0.6 + i * 4.08, y: 4.15, w: 3.88, h: 2.1, fill: DGRAY, line: DGRAY, heading: h, headingColor: SCARLET, headingSize: 14, body: b, bodyColor: LGRAY, bodySize: 12 });
 });
-note(s, "A 12-question benchmark cannot support the paper's conclusions; it can show whether the mechanism behaves as described.");
+note(s, "Verification is grounded: a SUPPORTED or CONTRADICTED verdict without a verbatim quote from the evidence is downgraded to UNDECIDED.");
 s.addNotes(
-  "[0:40] Say the recall definition out loud — it explains why recall never moves between variants. Keep this slide short; the metric definitions matter mostly for the slide after next."
+  "[0:55] The key methodological point: the answer is generated once, so baseline and VERIFACT-Lite differ only in whether refinement runs. Read the recall definition out loud — it explains why recall never moves between variants."
 );
 
-/* 7 — headline results  [1:40] */
+/* 7 — recreating 3/5: headline results  [1:30] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "Result 1 — baseline vs VERIFACT-Lite, laptop 3B");
+eyebrow(s, "Recreating the results  ·  3 of 5");
 title(s, "Extraction improves. Precision falls.", false);
-stat(s, { name: "h1", x: 0.6, y: 1.3, w: 2.88, h: 1.5, label: "Incomplete fact rate", value: "0.105 → 0.091", valueSize: 20, foot: "−12.8%", footColor: SCARLET });
-stat(s, { name: "h2", x: 3.68, y: 1.3, w: 2.88, h: 1.5, label: "Missing relational facts", value: "51 → 0", valueSize: 20, foot: "all recovered", footColor: SCARLET });
-stat(s, { name: "h3", x: 6.76, y: 1.3, w: 2.88, h: 1.5, label: "Precision", value: "0.420 → 0.343", valueSize: 20, foot: "−0.077", footColor: SCARLET });
-stat(s, { name: "h4", x: 9.84, y: 1.3, w: 2.88, h: 1.5, label: "Recall · F1", value: "0.408 · 0.372", valueSize: 20, foot: "recall fixed by design" });
+subtitle(s, "Baseline against VERIFACT-Lite, laptop run, Qwen2.5-3B judges", false);
+stat(s, { name: "h1", x: 0.6, y: 1.58, w: 2.88, h: 1.45, label: "Incomplete fact rate", value: "0.105 → 0.091", valueSize: 20, foot: "−12.8%", footColor: SCARLET });
+stat(s, { name: "h2", x: 3.68, y: 1.58, w: 2.88, h: 1.45, label: "Missing relational facts", value: "51 → 0", valueSize: 20, foot: "all recovered", footColor: SCARLET });
+stat(s, { name: "h3", x: 6.76, y: 1.58, w: 2.88, h: 1.45, label: "Precision", value: "0.420 → 0.343", valueSize: 20, foot: "−0.077", footColor: SCARLET });
+stat(s, { name: "h4", x: 9.84, y: 1.58, w: 2.88, h: 1.45, label: "Recall · F1", value: "0.408 · 0.372", valueSize: 20, foot: "recall fixed by design" });
 s.addChart(
   pres.ChartType.bar,
   [
@@ -693,9 +772,9 @@ s.addChart(
   Object.assign({}, CHART_BASE, {
     objectName: "chart-prf",
     x: 0.6,
-    y: 3.0,
+    y: 3.2,
     w: 6.0,
-    h: 3.4,
+    h: 3.1,
     barDir: "col",
     barGapWidthPct: 60,
     chartColors: [MGRAY, SCARLET],
@@ -709,9 +788,9 @@ s.addChart(
 card(s, {
   name: "where",
   x: 6.95,
-  y: 3.0,
+  y: 3.2,
   w: 5.75,
-  h: 3.4,
+  h: 3.1,
   fill: BLACK,
   line: BLACK,
   heading: "Where the precision went",
@@ -723,17 +802,18 @@ card(s, {
 });
 note(s, "Same answers, same retrieval, same verifier — only refinement differs. 163 facts refined, 51 added.");
 s.addNotes(
-  "[1:40] Your main results slide. The mechanism does what the paper says to the fact set, and measured precision goes down. Flag that contradicted did not move at all — that becomes the tell on the next slide but one."
+  "[1:30] The main reproduction slide. The mechanism does what the paper says to the fact set, and measured precision goes down. Flag that contradicted did not move at all — that becomes the tell two slides from now."
 );
 
-/* 8 — ablation  [1:00] */
+/* 8 — recreating 4/5: ablation  [0:50] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "Result 2 — ablation, laptop 3B");
+eyebrow(s, "Recreating the results  ·  4 of 5");
 title(s, "Each mechanism moves the metric it targets", false);
+subtitle(s, "Ablation over the two halves of the contribution, laptop run", false);
 table(s, {
   name: "abl",
   x: 0.6,
-  y: 1.3,
+  y: 1.58,
   w: 12.1,
   colW: [3.7, 1.9, 1.6, 1.7, 1.6, 1.6],
   rowH: 0.46,
@@ -751,21 +831,157 @@ table(s, {
   ["C isolates relation recovery", "All 51 missing relations become facts. The incomplete rate ticks up because the new facts are judged too."],
   ["The effects are additive", "D inherits B's lower incomplete rate and C's zero missing relations — and both precision costs."],
 ].forEach(([h, b], i) => {
-  card(s, { name: "abl" + i, x: 0.6 + i * 4.08, y: 3.6, w: 3.88, h: 1.9, fill: LGRAY, line: LGRAY, heading: h, headingSize: 14, body: b, bodySize: 12 });
+  card(s, { name: "abl" + i, x: 0.6 + i * 4.08, y: 3.85, w: 3.88, h: 1.9, fill: LGRAY, line: LGRAY, heading: h, headingSize: 14, body: b, bodySize: 12 });
 });
 note(s, "All four variants scored on one identical answer set, union ensemble, as in the paper.");
 s.addNotes(
-  "[1:00] Walk the table once, then read the three cards. Each half of the contribution moves its own metric, and the two compose."
+  "[0:50] Walk the table once, then read the three card headings only. Each half of the contribution moves its own metric, and the two compose."
 );
 
-/* 9 — the judge is the instrument  [1:30] */
+/* 9 — recreating 5/5: verdict changes  [1:15] */
 s = pres.addSlide({ masterName: "CONTENT_DARK", sectionTitle: "Talk" });
-eyebrow(s, "Result 3 — we re-ran everything with 7–8B judges", true);
+eyebrow(s, "Recreating the results  ·  5 of 5", true);
+title(s, "Does fixing a claim change its verdict?", true);
+subtitle(s, "The paper's research question, asked of our own pipeline", true);
+s.addShape(pres.ShapeType.roundRect, {
+  objectName: "big",
+  x: 0.6,
+  y: 1.6,
+  w: 3.3,
+  h: 2.2,
+  rectRadius: 0.06,
+  fill: { color: SCARLET },
+  line: { color: SCARLET, width: 1 },
+});
+s.addText("39–46%", {
+  isTextBox: true,
+  objectName: "big-v",
+  x: 0.6,
+  y: 1.85,
+  w: 3.3,
+  h: 1.0,
+  fontSize: 46,
+  bold: true,
+  color: WHITE,
+  align: "center",
+  margin: 0,
+});
+s.addText("of refined facts changed label\nacross all three runs", {
+  isTextBox: true,
+  objectName: "big-l",
+  x: 0.6,
+  y: 2.85,
+  w: 3.3,
+  h: 0.8,
+  fontSize: 13,
+  color: WHITE,
+  align: "center",
+  fontFace: "Arial",
+  lineSpacingMultiple: 1.2,
+  margin: 0,
+});
+table(s, {
+  name: "trans",
+  x: 4.25,
+  y: 1.6,
+  w: 8.45,
+  colW: [3.5, 1.2, 1.2, 2.55],
+  rowH: 0.37,
+  fontSize: 12,
+  align: "left",
+  head: ["Transition", "3B", "7–8B", "Meaning"],
+  rows: [
+    ["SUPPORTED → UNDECIDED", "37", "—", "was over-credited"],
+    ["UNDECIDED → SUPPORTED", "29", "—", "context made it checkable"],
+    ["Contradicted, before → after", "3 → 3", { text: "3 → 8", emph: true }, "errors finally surfaced"],
+    ["Verdict-change rate", "39.3%", { text: "45.6%", emph: true }, "paper reports 24.9%"],
+  ],
+});
+card(s, {
+  name: "cmp-paper",
+  x: 0.6,
+  y: 3.95,
+  w: 12.1,
+  h: 2.3,
+  fill: DGRAY,
+  line: SCARLET,
+  lineWidth: 1.5,
+  heading: "The paper's full signature only appears with stronger judges",
+  headingColor: SCARLET,
+  body:
+    "The paper reports supported falling AND contradicted rising after refinement, concluding that ignoring incomplete facts overestimates factuality.\n\nWith 3B judges we reproduced only the first half: contradicted never moved off 3. With 7–8B judges it rises to 8 — refinement exposes errors that the stripped claims had hidden. Same conclusion as the paper, now with both halves of the evidence.",
+  bodyColor: LGRAY,
+  bodySize: 13,
+});
+note(s, "Every refined fact is verified twice, as its original claim and as its refined claim, through the same evidence pipeline.");
+s.addNotes(
+  "[1:15] This slide justifies the paper and explains the precision drop. A quarter to nearly half of verdicts are decided by whether the claim kept its context. Dwell on the contradicted row — it is the result we could not get until the judges were bigger, which is the next section."
+);
+
+/* 10 — contribution 1/3: scaling the judges  [1:00] */
+s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
+eyebrow(s, "Our contribution  ·  1 of 3");
+title(s, "Re-running the whole study with stronger judges", false);
+subtitle(s, "Testing which conclusions were findings and which were small-model artifacts", false);
+[
+  [
+    "One configuration proves little",
+    "Everything above was measured by 3B judges. A single run cannot tell a property of the method from a property of the measuring model.",
+  ],
+  [
+    "The free-hardware answer",
+    "A Colab T4 holds 7–8B judges at Q4_K_M. The repository is config-driven, so only the model identifiers change — still no API key, still $0.",
+  ],
+  [
+    "What makes run A controlled",
+    "Extraction replays from cache, so A's baseline fact set is byte-identical to the laptop's: 21.50 facts per answer, precision 0.4200. Only the judges changed.",
+  ],
+].forEach(([h, b], i) => {
+  card(s, { name: "sc" + i, x: 0.6 + i * 4.08, y: 1.58, w: 3.88, h: 2.2, heading: h, headingColor: SCARLET, headingSize: 15, body: b, bodySize: 12 });
+});
+table(s, {
+  name: "configs",
+  x: 0.6,
+  y: 3.95,
+  w: 12.1,
+  colW: [2.4, 3.1, 3.4, 1.9, 1.3],
+  rowH: 0.44,
+  fontSize: 12,
+  align: "left",
+  head: ["Run", "Primary model", "Judges", "Hardware", "Controlled"],
+  rows: [
+    ["laptop-3B", "Qwen2.5-3B", "Qwen2.5-3B + Llama-3.2-3B", "GTX 1650, 4 GB", "reference"],
+    ["judges-7B  (A)", "Qwen2.5-3B (unchanged)", "Qwen2.5-7B + Llama-3.1-8B", "Colab T4, 16 GB", { text: "yes", emph: true }],
+    ["full-7B  (B)", "Qwen2.5-7B", "Qwen2.5-7B + Llama-3.1-8B", "Colab T4, 16 GB", "no"],
+  ],
+});
+card(s, {
+  name: "bnote",
+  x: 0.6,
+  y: 5.65,
+  w: 12.1,
+  h: 0.75,
+  fill: LGRAY,
+  line: LGRAY,
+  heading: "",
+  body:
+    "Run B changed the extractor, the incompleteness judge, the verifier and the recall entailment model at once, so its columns are read only against its own baseline — never against A's.",
+  bodySize: 12,
+});
+note(s, "Same 12 questions, same 12 generated answers, verified identical by hash across all three runs.");
+s.addNotes(
+  "[1:00] Frame this as the contribution: the paper ran one configuration, we ran three and asked which results were real. Be explicit that A is the controlled comparison and B is not — that distinction is why the next two slides can say anything at all."
+);
+
+/* 11 — contribution 2/3: the judge is the instrument  [1:30] */
+s = pres.addSlide({ masterName: "CONTENT_DARK", sectionTitle: "Talk" });
+eyebrow(s, "Our contribution  ·  2 of 3", true);
 title(s, "The metrics measure the judge as much as the system", true);
+subtitle(s, "Identical input, identical pipeline, one model swapped", true);
 table(s, {
   name: "instrument",
   x: 0.6,
-  y: 1.3,
+  y: 1.6,
   w: 12.1,
   colW: [5.3, 2.3, 2.3, 2.2],
   rowH: 0.46,
@@ -781,9 +997,9 @@ table(s, {
 card(s, {
   name: "insight",
   x: 0.6,
-  y: 3.25,
+  y: 3.5,
   w: 7.6,
-  h: 2.0,
+  h: 1.85,
   fill: DGRAY,
   line: SCARLET,
   lineWidth: 1.5,
@@ -794,14 +1010,14 @@ card(s, {
   bodyColor: LGRAY,
   bodySize: 13,
 });
-stat(s, { name: "i1", x: 8.45, y: 3.25, w: 2.0, h: 2.0, label: "Incomplete", value: "4.2×", foot: "more found", fill: DGRAY, labelColor: LGRAY, valueColor: SCARLET, footColor: LGRAY, valueSize: 32 });
-stat(s, { name: "i2", x: 10.7, y: 3.25, w: 2.0, h: 2.0, label: "Recall", value: "−31%", foot: "same answers", fill: DGRAY, labelColor: LGRAY, valueColor: SCARLET, footColor: LGRAY, valueSize: 32 });
+stat(s, { name: "i1", x: 8.45, y: 3.5, w: 2.0, h: 1.85, label: "Incomplete", value: "4.2×", foot: "more found", fill: DGRAY, labelColor: LGRAY, valueColor: SCARLET, footColor: LGRAY, valueSize: 32 });
+stat(s, { name: "i2", x: 10.7, y: 3.5, w: 2.0, h: 1.85, label: "Recall", value: "−31%", foot: "same answers", fill: DGRAY, labelColor: LGRAY, valueColor: SCARLET, footColor: LGRAY, valueSize: 32 });
 card(s, {
   name: "consequence",
   x: 0.6,
-  y: 5.45,
+  y: 5.5,
   w: 12.1,
-  h: 0.95,
+  h: 0.9,
   fill: DGRAY,
   line: DGRAY,
   heading: "",
@@ -810,19 +1026,20 @@ card(s, {
   bodyColor: LGRAY,
   bodySize: 13,
 });
-note(s, "Experiment A on a Colab T4: judges upgraded to Qwen2.5-7B + Llama-3.1-8B, everything else replayed from cache.");
+note(s, "Run A on a Colab T4: judges upgraded to Qwen2.5-7B + Llama-3.1-8B, everything else replayed from cache.");
 s.addNotes(
   "[1:30] The strongest finding of the project, and it is a methodological one. Any factuality score of this kind is a property of the judge as much as of the system under test. Say plainly: this is why we do not compare our absolute numbers with the paper's."
 );
 
-/* 10 — what survived at 7–8B  [1:30] */
+/* 12 — contribution 3/3: union vs majority  [1:15] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "Result 4 — which conclusions survived the upgrade");
+eyebrow(s, "Our contribution  ·  3 of 3");
 title(s, "One finding held, one was a small-model artifact", false);
+subtitle(s, "Testing the paper's union rule against a majority vote, at every model size", false);
 table(s, {
   name: "rules",
   x: 0.6,
-  y: 1.3,
+  y: 1.58,
   w: 6.1,
   colW: [1.5, 1.2, 1.5, 1.2, 0.7],
   rowH: 0.4,
@@ -840,7 +1057,7 @@ table(s, {
 card(s, {
   name: "held",
   x: 6.95,
-  y: 1.3,
+  y: 1.58,
   w: 5.75,
   h: 1.35,
   line: SCARLET,
@@ -854,7 +1071,7 @@ card(s, {
 card(s, {
   name: "broke",
   x: 6.95,
-  y: 2.8,
+  y: 3.08,
   w: 5.75,
   h: 1.35,
   heading: "Broke — the 60% incomplete-rate gap",
@@ -866,7 +1083,7 @@ card(s, {
 table(s, {
   name: "judges",
   x: 0.6,
-  y: 4.35,
+  y: 4.6,
   w: 12.1,
   colW: [3.1, 2.3, 2.3, 2.2, 2.2],
   rowH: 0.38,
@@ -882,150 +1099,18 @@ table(s, {
 });
 note(s, "Relation detection: the ensemble equalled Llama exactly in all three runs — 51/51, 54/54, 21/21. Qwen never found a relation Llama missed.");
 s.addNotes(
-  "[1:30] Two claims, opposite fates. Majority beating union survives everywhere. The dramatic incomplete-rate gap was a 3B artifact and we say so. Then the bottom table: for relations the union really is one judge's opinion at every size, but for incompleteness, bigger judges finally complement each other — 33 is more than either 32 or 27, which is the behaviour the paper's union rule assumes."
+  "[1:15] Two claims, opposite fates. Majority beating union survives everywhere. The dramatic incomplete-rate gap was a 3B artifact and we say so. Then the bottom table: for relations the union really is one judge's opinion at every size, but for incompleteness bigger judges finally complement each other — 33 exceeds both 32 and 27, which is the behaviour the union rule assumes."
 );
 
-/* 11 — verdict changes  [1:20] */
-s = pres.addSlide({ masterName: "CONTENT_DARK", sectionTitle: "Talk" });
-eyebrow(s, "Result 5 — the research question", true);
-title(s, "Does fixing a claim change its verdict?", true);
-s.addShape(pres.ShapeType.roundRect, {
-  objectName: "big",
-  x: 0.6,
-  y: 1.3,
-  w: 3.3,
-  h: 2.3,
-  rectRadius: 0.06,
-  fill: { color: SCARLET },
-  line: { color: SCARLET, width: 1 },
-});
-s.addText("39–46%", {
-  isTextBox: true,
-  objectName: "big-v",
-  x: 0.6,
-  y: 1.55,
-  w: 3.3,
-  h: 1.0,
-  fontSize: 46,
-  bold: true,
-  color: WHITE,
-  align: "center",
-  margin: 0,
-});
-s.addText("of refined facts changed label\nacross all three runs", {
-  isTextBox: true,
-  objectName: "big-l",
-  x: 0.6,
-  y: 2.6,
-  w: 3.3,
-  h: 0.85,
-  fontSize: 13,
-  color: WHITE,
-  align: "center",
-  fontFace: "Arial",
-  lineSpacingMultiple: 1.2,
-  margin: 0,
-});
-table(s, {
-  name: "trans",
-  x: 4.25,
-  y: 1.3,
-  w: 8.45,
-  colW: [3.5, 1.2, 1.2, 2.55],
-  rowH: 0.37,
-  fontSize: 12,
-  align: "left",
-  head: ["Transition", "3B", "7–8B", "Meaning"],
-  rows: [
-    ["SUPPORTED → UNDECIDED", "37", "—", "was over-credited"],
-    ["UNDECIDED → SUPPORTED", "29", "—", "context made it checkable"],
-    ["Contradicted, before → after", "3 → 3", { text: "3 → 8", emph: true }, "errors finally surfaced"],
-    ["Verdict-change rate", "39.3%", { text: "45.6%", emph: true }, "paper reports 24.9%"],
-  ],
-});
-card(s, {
-  name: "cmp-paper",
-  x: 0.6,
-  y: 3.85,
-  w: 12.1,
-  h: 2.4,
-  fill: DGRAY,
-  line: SCARLET,
-  lineWidth: 1.5,
-  heading: "The paper's full signature only appears with stronger judges",
-  headingColor: SCARLET,
-  body:
-    "The paper reports supported falling AND contradicted rising after refinement, concluding that ignoring incomplete facts overestimates factuality.\n\nWith 3B judges we reproduced only the first half: contradicted never moved off 3. With 7–8B judges it rises to 8 — refinement exposes errors that the stripped claims had hidden. Same conclusion as the paper, now with both halves of the evidence.",
-  bodyColor: LGRAY,
-  bodySize: 13,
-});
-note(s, "Every refined fact is verified twice, as its original claim and as its refined claim, through the same evidence pipeline.");
-s.addNotes(
-  "[1:20] This slide justifies the paper and explains the precision drop. A quarter to nearly half of verdicts are decided by whether the claim kept its context. The contradicted row is the part to dwell on — it is the result we could not get until the judges were big enough."
-);
-
-/* 12 — qualitative  [0:45] */
-s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "Result 6 — qualitative");
-title(s, "What a 3B refiner actually produces", false);
-card(s, { name: "good", x: 0.6, y: 1.3, w: 6.0, h: 3.4, line: SCARLET, lineWidth: 1.5, heading: "Works — Q10, ozone layer", headingColor: SCARLET, body: "" });
-s.addText(
-  [
-    { text: "omitted_condition_or_source", options: { color: MGRAY, fontSize: 11, breakLine: true } },
-    { text: "before   “These substances are in the atmosphere.”", options: { breakLine: true } },
-    { text: "after     “The substances are in the atmosphere since the Montreal Protocol was signed.”", options: { breakLine: true } },
-    { text: "UNDECIDED → SUPPORTED", options: { color: SCARLET, bold: true, fontSize: 12, breakLine: true } },
-    { text: " ", options: { fontSize: 6, breakLine: true } },
-    { text: "missing_comparison", options: { color: MGRAY, fontSize: 11, breakLine: true } },
-    { text: "before   “The decrease is in the concentration of substances.”", options: { breakLine: true } },
-    { text: "after     “… compared to before the Montreal Protocol.”", options: { breakLine: true } },
-    { text: "UNDECIDED → SUPPORTED", options: { color: SCARLET, bold: true, fontSize: 12 } },
-  ],
-  { isTextBox: true, objectName: "good-t", x: 0.86, y: 1.85, w: 5.5, h: 2.7, fontSize: 12, color: DGRAY, fontFace: "Arial", lineSpacingMultiple: 1.15, margin: 0 }
-);
-card(s, { name: "bad", x: 6.95, y: 1.3, w: 5.75, h: 3.4, heading: "Fails — Q01, the paper's own example", headingColor: DGRAY, body: "" });
-s.addText(
-  [
-    { text: "the refiner flipped the meaning", options: { color: MGRAY, fontSize: 11, breakLine: true } },
-    { text: "before   “There was demand for gold as jewelry.”", options: { breakLine: true } },
-    { text: "after     “There was no demand for gold as jewelry.”", options: { breakLine: true } },
-    { text: "The hypothetical from the question was pasted into a fact stating the opposite.", options: { color: SCARLET, fontSize: 12, breakLine: true } },
-    { text: " ", options: { fontSize: 6, breakLine: true } },
-    { text: "condition attached to the wrong claim", options: { color: MGRAY, fontSize: 11, breakLine: true } },
-    { text: "“Gold has unique properties of malleability if there was no demand for gold as jewelry.”", options: { breakLine: true } },
-    { text: "SUPPORTED → UNDECIDED", options: { color: SCARLET, bold: true, fontSize: 12 } },
-  ],
-  { isTextBox: true, objectName: "bad-t", x: 7.21, y: 1.85, w: 5.25, h: 2.7, fontSize: 12, color: DGRAY, fontFace: "Arial", lineSpacingMultiple: 1.15, margin: 0 }
-);
-card(s, {
-  name: "added",
-  x: 0.6,
-  y: 4.9,
-  w: 12.1,
-  h: 1.4,
-  fill: BLACK,
-  line: BLACK,
-  heading: "Added relational fact — Q04, Chernobyl, temporal",
-  headingColor: SCARLET,
-  headingSize: 13,
-  body:
-    "“The experiment just before the explosion caused the reactor to exceed its design limits, resulting in the explosion of hydrogen gas in the pressure vessel.”  The span that produced it was never covered by any extracted fact.",
-  bodyColor: LGRAY,
-  bodySize: 12,
-});
-note(s, "6 examples auto-selected into outputs/examples/presentation_examples.json, ranked by label changes and error type.");
-s.addNotes(
-  "[0:45] Read one example from each side only. Showing the failure is deliberate: the 3B refiner has no guard against changing meaning, which is why a stronger model was the first thing we tested."
-);
-
-/* 13 — vs paper  [1:10] */
+/* 13 — comparison with the paper  [1:00] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
 eyebrow(s, "Comparison with the paper");
 title(s, "Directions match. Magnitudes do not.", false);
+subtitle(s, "What a free reimplementation can and cannot claim", false);
 table(s, {
   name: "vs",
   x: 0.6,
-  y: 1.3,
+  y: 1.58,
   w: 12.1,
   colW: [3.3, 3.0, 3.9, 1.9],
   rowH: 0.4,
@@ -1048,23 +1133,24 @@ table(s, {
   ["Not reproduced", "Absolute precision, recall and F1. Different models, different evidence, 12 prompts instead of 1,096, no human annotation.", MGRAY],
   ["Now explained", "Our low baseline incomplete rate was the judge, not the extractor: the same facts score 10.5% at 3B and 43.8% at 7B against the paper's 56.7%.", MGRAY],
 ].forEach(([h, b, col], i) => {
-  card(s, { name: "vs" + i, x: 0.6 + i * 4.08, y: 4.9, w: 3.88, h: 1.5, heading: h, headingColor: col, headingSize: 14, body: b, bodySize: 12 });
+  card(s, { name: "vs" + i, x: 0.6 + i * 4.08, y: 4.95, w: 3.88, h: 1.45, heading: h, headingColor: col, headingSize: 14, body: b, bodySize: 12 });
 });
 note(s, "Every VERIFACT-Lite value is measured by this repository; none is copied from the paper or estimated.");
 s.addNotes(
-  "[1:10] Point at the Agreement column, not the numbers. The row that changed since the first version of this talk is the last one: we can now explain the gap instead of speculating about it."
+  "[1:00] Point at the Agreement column, not the numbers. The claim is that the mechanism behaves as described; the claim is explicitly not that the numbers match."
 );
 
-/* 14 — limits and fixes  [1:10] */
+/* 14 — future plans  [0:55] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
-eyebrow(s, "Limits, and what would fix them");
+eyebrow(s, "Future plans & next steps");
 title(s, "Every limitation points at a next step", false);
+subtitle(s, "Two were tested on free hardware; the rest are proposals, labelled as such", false);
 card(s, {
   name: "rubber",
   x: 0.6,
-  y: 1.3,
+  y: 1.58,
   w: 12.1,
-  h: 1.35,
+  h: 1.3,
   fill: BLACK,
   line: SCARLET,
   lineWidth: 1.5,
@@ -1079,7 +1165,7 @@ card(s, {
 table(s, {
   name: "fixes",
   x: 0.6,
-  y: 2.85,
+  y: 3.05,
   w: 12.1,
   colW: [4.6, 4.5, 3.0],
   rowH: 0.46,
@@ -1095,40 +1181,39 @@ table(s, {
     ["Recall is itself judge-dependent (0.41 vs 0.28)", "Fixed entailment model across all runs", "not yet run"],
   ],
 });
-note(s, "Two rows are now measured rather than proposed. The rest remain proposed directions, not validated results.");
+note(s, "Full ranked list in the appendix. Nothing in the 'not yet run' rows is claimed as a result.");
 s.addNotes(
-  "[1:10] Open by owning the 0.92 mistake — it shows the harness was itself tested. Then the table: the top two rows started as guesses on the first version of this talk and are now experiments with results. The rest are still guesses, and are labelled as such."
+  "[0:55] Open by owning the 0.92 mistake — it shows the harness was itself tested. Then the table: the top two rows started as proposals on the first version of this talk and are now experiments with results. The rest are still proposals, and are labelled as such."
 );
 
-/* 15 — takeaways  [0:40] */
+/* 15 — thank you  [0:05] */
 s = pres.addSlide({ masterName: "CONTENT_DARK", sectionTitle: "Talk" });
-eyebrow(s, "Takeaways", true);
-title(s, "Four things this reimplementation establishes", true);
-[
-  ["1", "The whole VeriFact pipeline runs on a 4 GB consumer GPU with quantized 3B models, free Wikipedia evidence and no API key — and scales to 7–8B on a free T4."],
-  ["2", "Refinement changed the verdict on 39–46% of refined facts across three model configurations, against 24.9% in the paper. The phenomenon is robust to model size."],
-  ["3", "These metrics measure the judge as much as the system: identical facts score 0.105 incomplete at 3B and 0.438 at 7B; identical answers score 0.41 recall at 3B and 0.28 at 7B."],
-  ["4", "Majority vote beat the paper's union rule on precision in every configuration — but the large incomplete-rate advantage we first reported was a 3B artifact, and we say so."],
-].forEach(([n, t], i) => {
-  const y = 1.35 + i * 1.3;
-  const last = i === 3;
-  s.addShape(pres.ShapeType.roundRect, {
-    objectName: "tk" + n,
-    x: 0.6,
-    y,
-    w: 12.1,
-    h: 1.12,
-    rectRadius: 0.06,
-    fill: { color: DGRAY },
-    line: { color: last ? SCARLET : DGRAY, width: last ? 1.5 : 1 },
-  });
-  s.addShape(pres.ShapeType.ellipse, { objectName: "tk-b" + n, x: 0.85, y: y + 0.31, w: 0.5, h: 0.5, fill: { color: SCARLET }, line: { color: SCARLET, width: 1 } });
-  s.addText(n, { isTextBox: true, objectName: "tk-n" + n, x: 0.85, y: y + 0.31, w: 0.5, h: 0.5, fontSize: 16, bold: true, color: WHITE, align: "center", valign: "middle", margin: 0 });
-  s.addText(t, { isTextBox: true, objectName: "tk-t" + n, x: 1.55, y: y + 0.12, w: 10.9, h: 0.88, fontSize: 13, color: LGRAY, fontFace: "Arial", lineSpacingMultiple: 1.15, valign: "middle", margin: 0 });
+s.addText("THANK YOU", {
+  isTextBox: true,
+  objectName: "ty",
+  x: 0.75,
+  y: 1.5,
+  w: 11.8,
+  h: 1.2,
+  fontSize: 54,
+  bold: true,
+  color: WHITE,
+  margin: 0,
 });
-note(s, "Repository: config-driven, cached, 59 tests  ·  three runs reproducible from one command without a GPU");
+s.addShape(pres.ShapeType.rect, { objectName: "ty-rule", x: 0.78, y: 2.8, w: 2.2, h: 0.08, fill: { color: SCARLET }, line: { color: SCARLET, width: 1 } });
+[
+  ["1", "The whole pipeline runs on a 4 GB consumer GPU and a free T4 — no API key, $0 total cost."],
+  ["2", "Refinement changed the verdict on 39–46% of refined facts in every configuration, against 24.9% in the paper."],
+  ["3", "These metrics measure the judge as much as the system: the same facts score 0.105 incomplete at 3B and 0.438 at 7B."],
+].forEach(([n, t], i) => {
+  const y = 3.35 + i * 0.84;
+  s.addShape(pres.ShapeType.ellipse, { objectName: "ty-b" + n, x: 0.78, y: y + 0.09, w: 0.44, h: 0.44, fill: { color: SCARLET }, line: { color: SCARLET, width: 1 } });
+  s.addText(n, { isTextBox: true, objectName: "ty-n" + n, x: 0.78, y: y + 0.09, w: 0.44, h: 0.44, fontSize: 15, bold: true, color: WHITE, align: "center", valign: "middle", margin: 0 });
+  s.addText(t, { isTextBox: true, objectName: "ty-t" + n, x: 1.45, y, w: 11.1, h: 0.62, fontSize: 14, color: LGRAY, fontFace: "Arial", lineSpacingMultiple: 1.15, valign: "middle", margin: 0 });
+});
+note(s, "Config-driven, fully cached, 59 unit tests  ·  all three runs reproduce from one command without a GPU");
 s.addNotes(
-  "[0:40] Close on points 3 and 4. Point 3 is the finding that generalises beyond this paper. Point 4 is where we corrected ourselves between the first and second versions of this talk, which is the honest thing to show."
+  "[0:05] Leave this up for the questions. If asked to summarise, read point 3 — it is the finding that generalises beyond this paper."
 );
 
 /* ------------------------------------------------------------- appendix
@@ -1209,7 +1294,59 @@ stat(s, { name: "wm3", x: 8.8, y: 5.1, w: 3.9, h: 1.3, label: "Fact added only w
 note(s, "Kept lexical, as in the paper. A semantic variant is listed as future work rather than silently substituted.");
 s.addNotes("Appendix. Use if asked how missing relations are found.");
 
-/* A2 — full future-work list */
+/* A2 — qualitative examples */
+s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appendix" });
+eyebrow(s, "Appendix — not presented");
+title(s, "What a 3B refiner actually produces", false);
+card(s, { name: "good", x: 0.6, y: 1.3, w: 6.0, h: 3.4, line: SCARLET, lineWidth: 1.5, heading: "Works — Q10, ozone layer", headingColor: SCARLET, body: "" });
+s.addText(
+  [
+    { text: "omitted_condition_or_source", options: { color: MGRAY, fontSize: 11, breakLine: true } },
+    { text: "before   “These substances are in the atmosphere.”", options: { breakLine: true } },
+    { text: "after     “The substances are in the atmosphere since the Montreal Protocol was signed.”", options: { breakLine: true } },
+    { text: "UNDECIDED → SUPPORTED", options: { color: SCARLET, bold: true, fontSize: 12, breakLine: true } },
+    { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "missing_comparison", options: { color: MGRAY, fontSize: 11, breakLine: true } },
+    { text: "before   “The decrease is in the concentration of substances.”", options: { breakLine: true } },
+    { text: "after     “… compared to before the Montreal Protocol.”", options: { breakLine: true } },
+    { text: "UNDECIDED → SUPPORTED", options: { color: SCARLET, bold: true, fontSize: 12 } },
+  ],
+  { isTextBox: true, objectName: "good-t", x: 0.86, y: 1.85, w: 5.5, h: 2.7, fontSize: 12, color: DGRAY, fontFace: "Arial", lineSpacingMultiple: 1.15, margin: 0 }
+);
+card(s, { name: "bad", x: 6.95, y: 1.3, w: 5.75, h: 3.4, heading: "Fails — Q01, the paper's own example", headingColor: DGRAY, body: "" });
+s.addText(
+  [
+    { text: "the refiner flipped the meaning", options: { color: MGRAY, fontSize: 11, breakLine: true } },
+    { text: "before   “There was demand for gold as jewelry.”", options: { breakLine: true } },
+    { text: "after     “There was no demand for gold as jewelry.”", options: { breakLine: true } },
+    { text: "The hypothetical from the question was pasted into a fact stating the opposite.", options: { color: SCARLET, fontSize: 12, breakLine: true } },
+    { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "condition attached to the wrong claim", options: { color: MGRAY, fontSize: 11, breakLine: true } },
+    { text: "“Gold has unique properties of malleability if there was no demand for gold as jewelry.”", options: { breakLine: true } },
+    { text: "SUPPORTED → UNDECIDED", options: { color: SCARLET, bold: true, fontSize: 12 } },
+  ],
+  { isTextBox: true, objectName: "bad-t", x: 7.21, y: 1.85, w: 5.25, h: 2.7, fontSize: 12, color: DGRAY, fontFace: "Arial", lineSpacingMultiple: 1.15, margin: 0 }
+);
+card(s, {
+  name: "added",
+  x: 0.6,
+  y: 4.9,
+  w: 12.1,
+  h: 1.4,
+  fill: BLACK,
+  line: BLACK,
+  heading: "Added relational fact — Q04, Chernobyl, temporal",
+  headingColor: SCARLET,
+  headingSize: 13,
+  body:
+    "“The experiment just before the explosion caused the reactor to exceed its design limits, resulting in the explosion of hydrogen gas in the pressure vessel.”  The span that produced it was never covered by any extracted fact.",
+  bodyColor: LGRAY,
+  bodySize: 12,
+});
+note(s, "6 examples auto-selected into outputs/examples/presentation_examples.json, ranked by label changes and error type.");
+s.addNotes("Appendix. Use if asked what the refiner actually writes, or why a stronger model was the first thing tested.");
+
+/* A3 — full future-work list */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appendix" });
 eyebrow(s, "Appendix — not presented");
 title(s, "Full ranked list of proposed improvements", false);
@@ -1244,21 +1381,21 @@ s.addText(
 note(s, "The first two items are now measured. The rest are proposed directions with expected metric effects.");
 s.addNotes("Appendix. Use if asked what else you would do.");
 
-/* A3 — experiment B and implementation detail */
+/* A4 — experiment B and known hazards */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appendix" });
 eyebrow(s, "Appendix — not presented");
-title(s, "Experiment B, and known hazards", false);
+title(s, "Run B, and known hazards", false);
 card(s, {
   name: "expb",
   x: 0.6,
   y: 1.3,
   w: 12.1,
   h: 1.9,
-  heading: "Experiment B — the whole pipeline at 7B, including the extractor",
+  heading: "Run B — the whole pipeline at 7B, including the extractor",
   headingColor: SCARLET,
   headingSize: 14,
   body:
-    "Baseline: 15.92 facts per answer against 21.50, incomplete rate 0.319, precision 0.5050. Refinement then costs far less precision (−0.025, against −0.118 in experiment A).\n" +
+    "Baseline: 15.92 facts per answer against 21.50, incomplete rate 0.319, precision 0.5050. Refinement then costs far less precision (−0.025, against −0.118 in run A).\n" +
     "A stronger extractor writes fewer, coarser, more self-contained facts, so there is less to repair — the same trade the paper notes for VERIFY (18.5 facts per response against VeriFact's 32.3).\n" +
     "B changed the extractor, the judge, the verifier and the recall entailment model at once, so its columns read only against its own baseline.",
   bodySize: 12,
@@ -1271,7 +1408,7 @@ card(s, {
   card(s, { name: "haz" + i, x: 0.6 + i * 4.08, y: 3.45, w: 3.88, h: 2.85, fill: BLACK, line: BLACK, heading: h, headingColor: SCARLET, headingSize: 13, body: b, bodyColor: LGRAY, bodySize: 11 });
 });
 note(s, "Full write-up in colab/RESULTS.md; all three runs reproduce from one command with no GPU.");
-s.addNotes("Appendix. Use if asked about experiment B or about engineering problems.");
+s.addNotes("Appendix. Use if asked about run B or about engineering problems.");
 
 /* ------------------------------------------------------------------ write */
 
