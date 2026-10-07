@@ -370,7 +370,7 @@ const CHART_BASE = {
  *   10-12   our contribution, 1..3
  *   13      comparison with the paper
  *   14      future plans and next steps
- *   15      thank you
+ *   15      takeaways
  *
  * Four appendix slides follow for the question period; they are not part of
  * the 15 minutes and can be deleted without touching the talk.
@@ -468,7 +468,7 @@ s.addNotes(
   "[0:20] One sentence: we rebuilt the paper's mechanism on hardware that costs nothing to run, measured it against its own baseline, then re-ran the whole thing with larger judges to find out which conclusions were real. Move on quickly."
 );
 
-/* 2 — the problem  [1:20] */
+/* 2 — the problem  [1:15] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
 eyebrow(s, "The problem");
 title(s, "Atomic facts lose the context that makes them true", false);
@@ -532,10 +532,10 @@ stat(s, { name: "p2", x: 4.7, y: 5.2, w: 3.9, h: 1.25, label: "Missing facts per
 stat(s, { name: "p3", x: 8.8, y: 5.2, w: 3.9, h: 1.25, label: "Of those, omitted conditions", value: "51%", foot: "the gold case above", valueColor: SCARLET, valueSize: 26 });
 note(s, "VeriFact: Liu, Zhang, Munir, Gu & Wang, EMNLP 2025, pp. 17908–17925  ·  github.com/launchnlp/VeriFact");
 s.addNotes(
-  "[1:20] This example is the whole paper. Verifying the stripped claim gives a meaningless verdict, because it is not what the answer said. Read the two fact lists side by side, then point at the three numbers: measured on human annotation, not anecdote."
+  "[1:15] This example is the whole paper. Verifying the stripped claim gives a meaningless verdict, because it is not what the answer said. Read the two fact lists side by side, then point at the three numbers: measured on human annotation, not anecdote."
 );
 
-/* 3 — the solution  [0:50] */
+/* 3 — the solution  [0:45] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
 eyebrow(s, "The solution");
 title(s, "VeriFact — repair the facts before verifying them", false);
@@ -579,7 +579,7 @@ s.addText("What the paper reports on FACTRBENCH", {
 });
 note(s, "These are the paper's numbers, on 1,096 prompts with GPT-4o, Llama 3.3-70B and Qwen 2.5-32B. We do not attempt to match them.");
 s.addNotes(
-  "[0:50] Three sentences on what the framework is, then the bottom strip: this is what the paper claims. Say explicitly that the bottom row is the paper's, not ours — the rest of the talk is about which of these behaviours survive on free hardware."
+  "[0:45] Three sentences on what the framework is, then the bottom strip: this is what the paper claims. Say explicitly that the bottom row is the paper's, not ours — the rest of the talk is about which of these behaviours survive on free hardware."
 );
 
 /* 4 — how it works  [1:15] */
@@ -645,7 +645,7 @@ s.addNotes(
   "[1:15] Walk the four boxes left to right in about thirty seconds. Spend the rest on the two bottom cards: these are the two mechanisms we reimplemented. The union rule matters later — we test whether it is the right choice."
 );
 
-/* 5 — recreating 1/5: setting up  [1:00] */
+/* 5 — recreating 1/5: setting up  [0:55] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
 eyebrow(s, "Recreating the results  ·  1 of 5");
 title(s, "Setting up the experiment", false);
@@ -680,10 +680,10 @@ table(s, {
 });
 note(s, "Reference facts are written from authoritative sources and deliberately not derived from the answer being evaluated. All model names live in config.yaml; none is hard-coded.");
 s.addNotes(
-  "[1:00] Do not read the table. Say: every paid or large component has a free local stand-in, and the detection logic itself is unchanged. Then the bottom strip — twelve questions written to contain conditions, comparisons and event order, and an answer key written by hand before any run."
+  "[0:55] Do not read the table. Say: every paid or large component has a free local stand-in, and the detection logic itself is unchanged. Then the bottom strip — twelve questions written to contain conditions, comparisons and event order, and an answer key written by hand before any run."
 );
 
-/* 6 — recreating 2/5: the baseline  [0:55] */
+/* 6 — recreating 2/5: the baseline  [0:50] */
 s = pres.addSlide({ masterName: "CONTENT_DARK", sectionTitle: "Talk" });
 eyebrow(s, "Recreating the results  ·  2 of 5", true);
 title(s, "Generating the baseline", true);
@@ -751,7 +751,7 @@ card(s, {
 });
 note(s, "Verification is grounded: a SUPPORTED or CONTRADICTED verdict without a verbatim quote from the evidence is downgraded to UNDECIDED.");
 s.addNotes(
-  "[0:55] The key methodological point: the answer is generated once, so baseline and VERIFACT-Lite differ only in whether refinement runs. Read the recall definition out loud — it explains why recall never moves between variants."
+  "[0:50] The key methodological point: the answer is generated once, so baseline and VERIFACT-Lite differ only in whether refinement runs. Read the recall definition out loud — it explains why recall never moves between variants."
 );
 
 /* 7 — recreating 3/5: headline results  [1:30] */
@@ -805,7 +805,7 @@ s.addNotes(
   "[1:30] The main reproduction slide. The mechanism does what the paper says to the fact set, and measured precision goes down. Flag that contradicted did not move at all — that becomes the tell two slides from now."
 );
 
-/* 8 — recreating 4/5: ablation  [0:50] */
+/* 8 — recreating 4/5: ablation  [0:45] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
 eyebrow(s, "Recreating the results  ·  4 of 5");
 title(s, "Each mechanism moves the metric it targets", false);
@@ -835,7 +835,7 @@ table(s, {
 });
 note(s, "All four variants scored on one identical answer set, union ensemble, as in the paper.");
 s.addNotes(
-  "[0:50] Walk the table once, then read the three card headings only. Each half of the contribution moves its own metric, and the two compose."
+  "[0:45] Walk the table once, then read the three card headings only. Each half of the contribution moves its own metric, and the two compose."
 );
 
 /* 9 — recreating 5/5: verdict changes  [1:15] */
@@ -1102,7 +1102,7 @@ s.addNotes(
   "[1:15] Two claims, opposite fates. Majority beating union survives everywhere. The dramatic incomplete-rate gap was a 3B artifact and we say so. Then the bottom table: for relations the union really is one judge's opinion at every size, but for incompleteness bigger judges finally complement each other — 33 exceeds both 32 and 27, which is the behaviour the union rule assumes."
 );
 
-/* 13 — comparison with the paper  [1:00] */
+/* 13 — comparison with the paper  [0:55] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
 eyebrow(s, "Comparison with the paper");
 title(s, "Directions match. Magnitudes do not.", false);
@@ -1137,7 +1137,7 @@ table(s, {
 });
 note(s, "Every VERIFACT-Lite value is measured by this repository; none is copied from the paper or estimated.");
 s.addNotes(
-  "[1:00] Point at the Agreement column, not the numbers. The claim is that the mechanism behaves as described; the claim is explicitly not that the numbers match."
+  "[0:55] Point at the Agreement column, not the numbers. The claim is that the mechanism behaves as described; the claim is explicitly not that the numbers match."
 );
 
 /* 14 — future plans  [0:55] */
@@ -1186,34 +1186,36 @@ s.addNotes(
   "[0:55] Open by owning the 0.92 mistake — it shows the harness was itself tested. Then the table: the top two rows started as proposals on the first version of this talk and are now experiments with results. The rest are still proposals, and are labelled as such."
 );
 
-/* 15 — thank you  [0:05] */
+/* 15 — takeaways  [0:40] */
 s = pres.addSlide({ masterName: "CONTENT_DARK", sectionTitle: "Talk" });
-s.addText("THANK YOU", {
-  isTextBox: true,
-  objectName: "ty",
-  x: 0.75,
-  y: 1.5,
-  w: 11.8,
-  h: 1.2,
-  fontSize: 54,
-  bold: true,
-  color: WHITE,
-  margin: 0,
-});
-s.addShape(pres.ShapeType.rect, { objectName: "ty-rule", x: 0.78, y: 2.8, w: 2.2, h: 0.08, fill: { color: SCARLET }, line: { color: SCARLET, width: 1 } });
+eyebrow(s, "Takeaways", true);
+title(s, "Four things this reimplementation establishes", true);
+subtitle(s, "Measured by the repository, on 12 questions and three model configurations", true);
 [
-  ["1", "The whole pipeline runs on a 4 GB consumer GPU and a free T4 — no API key, $0 total cost."],
-  ["2", "Refinement changed the verdict on 39–46% of refined facts in every configuration, against 24.9% in the paper."],
-  ["3", "These metrics measure the judge as much as the system: the same facts score 0.105 incomplete at 3B and 0.438 at 7B."],
+  ["1", "The whole VeriFact pipeline runs on a 4 GB consumer GPU with quantized 3B models, free Wikipedia evidence and no API key — and scales to 7–8B on a free T4."],
+  ["2", "Refinement changed the verdict on 39–46% of refined facts across three model configurations, against 24.9% in the paper. The phenomenon is robust to model size."],
+  ["3", "These metrics measure the judge as much as the system: identical facts score 0.105 incomplete at 3B and 0.438 at 7B; identical answers score 0.41 recall at 3B and 0.28 at 7B."],
+  ["4", "Majority vote beat the paper's union rule on precision in every configuration — but the large incomplete-rate advantage we first reported was a 3B artifact, and we say so."],
 ].forEach(([n, t], i) => {
-  const y = 3.35 + i * 0.84;
-  s.addShape(pres.ShapeType.ellipse, { objectName: "ty-b" + n, x: 0.78, y: y + 0.09, w: 0.44, h: 0.44, fill: { color: SCARLET }, line: { color: SCARLET, width: 1 } });
-  s.addText(n, { isTextBox: true, objectName: "ty-n" + n, x: 0.78, y: y + 0.09, w: 0.44, h: 0.44, fontSize: 15, bold: true, color: WHITE, align: "center", valign: "middle", margin: 0 });
-  s.addText(t, { isTextBox: true, objectName: "ty-t" + n, x: 1.45, y, w: 11.1, h: 0.62, fontSize: 14, color: LGRAY, fontFace: "Arial", lineSpacingMultiple: 1.15, valign: "middle", margin: 0 });
+  const y = 1.62 + i * 1.22;
+  const last = i === 3;
+  s.addShape(pres.ShapeType.roundRect, {
+    objectName: "tk" + n,
+    x: 0.6,
+    y,
+    w: 12.1,
+    h: 1.06,
+    rectRadius: 0.06,
+    fill: { color: DGRAY },
+    line: { color: last ? SCARLET : DGRAY, width: last ? 1.5 : 1 },
+  });
+  s.addShape(pres.ShapeType.ellipse, { objectName: "tk-b" + n, x: 0.85, y: y + 0.28, w: 0.5, h: 0.5, fill: { color: SCARLET }, line: { color: SCARLET, width: 1 } });
+  s.addText(n, { isTextBox: true, objectName: "tk-n" + n, x: 0.85, y: y + 0.28, w: 0.5, h: 0.5, fontSize: 16, bold: true, color: WHITE, align: "center", valign: "middle", margin: 0 });
+  s.addText(t, { isTextBox: true, objectName: "tk-t" + n, x: 1.55, y: y + 0.1, w: 10.9, h: 0.86, fontSize: 13, color: LGRAY, fontFace: "Arial", lineSpacingMultiple: 1.15, valign: "middle", margin: 0 });
 });
 note(s, "Config-driven, fully cached, 59 unit tests  ·  all three runs reproduce from one command without a GPU");
 s.addNotes(
-  "[0:05] Leave this up for the questions. If asked to summarise, read point 3 — it is the finding that generalises beyond this paper."
+  "[0:40] Close on points 3 and 4. Point 3 is the finding that generalises beyond this paper. Point 4 is where we corrected ourselves between versions of this talk, which is the honest thing to show. Leave the slide up for the questions."
 );
 
 /* ------------------------------------------------------------- appendix
