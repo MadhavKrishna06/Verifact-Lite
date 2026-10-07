@@ -26,3 +26,7 @@ models/
 node_modules/
 package-lock.json
 presentation/render/
+
+# Colab bundle (regenerate with python colab/make_bundle.py)
+colab/verifact_lite_bundle.zip
+outputs_colab_*/

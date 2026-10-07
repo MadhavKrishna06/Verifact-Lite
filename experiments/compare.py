@@ -567,7 +567,10 @@ def main() -> None:
 
     results_md = results_markdown(summary, ablation, charts)
     (out_dir / "results.md").write_text(results_md, encoding="utf-8")
-    injected = update_readme(Path(cfg["_root"]), results_md)
+    # Only the default run owns the README's results section; an alternate
+    # configuration (a Colab run, a different ensemble) writes its own
+    # results.md and leaves the README alone.
+    injected = out_dir.name == "outputs" and update_readme(Path(cfg["_root"]), results_md)
 
     print(f"\nwrote {out_dir / 'comparison.csv'}")
     print(f"wrote {out_dir / 'results.md'}")

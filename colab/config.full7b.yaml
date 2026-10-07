@@ -1,0 +1,171 @@
+# EXPERIMENT B - full upgrade (Colab T4, 16 GB).
+#
+# Primary model and judges are all 7-8B. Extraction, refinement, verification
+# and recall entailment all improve together, so the baseline itself changes:
+# this is a NEW system, not a reproduction, and its baseline column is not the
+# laptop baseline. Primary and judge 1 share one model, so only two models are
+# ever resident and no unloading is needed.
+#
+#   python -m experiments.run_ablation --config colab/config.full7b.yaml
+#
+# VERIFACT-Lite configuration
+# A resource-constrained reimplementation of the core VERIFACT methodology
+# using open-source, locally hosted models. No paid API keys are required.
+
+# ---------------------------------------------------------------------------
+# Primary model. Used for answer generation, extraction, refinement,
+# query generation, verification and recall entailment unless overridden.
+# ---------------------------------------------------------------------------
+model:
+  name: Qwen2.5-7B-Instruct
+  backend: ollama            # ollama | llama_cpp_server | llama_cpp_python
+  model_id: qwen2.5:7b-instruct-q4_K_M
+  quantization: Q4_K_M
+  temperature: 0.1
+  max_tokens: 2048
+  timeout_s: 600
+
+# ---------------------------------------------------------------------------
+# Backend connection settings.
+# llama_cpp_server expects an OpenAI-compatible /v1/chat/completions endpoint
+# (e.g. `llama-server -m model.gguf --port 8080`).
+# ---------------------------------------------------------------------------
+backends:
+  ollama:
+    host: http://127.0.0.1:11434
+  llama_cpp_server:
+    base_url: http://127.0.0.1:8080/v1
+    api_key: EMPTY
+  llama_cpp_python:
+    model_path: models/qwen2.5-3b-instruct-q4_k_m.gguf
+    n_ctx: 8192
+    n_gpu_layers: -1
+
+# ---------------------------------------------------------------------------
+# Answer generation. The answer under evaluation is generated exactly once
+# and shared by every pipeline variant (baseline and VERIFACT-Lite).
+# ---------------------------------------------------------------------------
+generation:
+  model_id: qwen2.5:3b-instruct-q4_K_M
+  temperature: 0.7
+  max_tokens: 400
+  max_words: 130
+
+# ---------------------------------------------------------------------------
+# Detection ensemble. The paper uses GPT-4o + Llama 3.3-70B + Qwen 2.5-32B and
+# takes the UNION of positive detections to prioritise recall. Here the judges
+# are small local models, run sequentially. Any number of judges is supported.
+# ---------------------------------------------------------------------------
+judges:
+  - alias: qwen
+    name: Qwen2.5-7B-Instruct
+    backend: ollama
+    model_id: qwen2.5:7b-instruct-q4_K_M
+    temperature: 0.0
+    max_tokens: 192
+    weight: 0.6
+  - alias: llama
+    name: Llama-3.1-8B-Instruct
+    backend: ollama
+    model_id: llama3.1:8b-instruct-q4_K_M
+    temperature: 0.0
+    max_tokens: 192
+    weight: 0.4
+
+ensemble:
+  strategy: union            # union | majority | weighted
+  weighted_threshold: 0.5
+
+# Reporting. The paper refines on the union of three judges but measures the
+# incomplete-fact rate with a single model (GPT-4o). The same split is kept here:
+# refinement uses the ensemble above, while the rate reported in the tables comes
+# from this one judge, so the facts are not scored by the ensemble that chose them.
+measurement:
+  incomplete_judge: qwen
+
+# ---------------------------------------------------------------------------
+# Fact extraction (STEP 1). Deliberately a faithful, weak SAFE-style
+# baseline: sentence-level decomposition + pronoun-only decontextualization.
+# Its known failure modes are what VERIFACT-Lite repairs.
+# ---------------------------------------------------------------------------
+extraction:
+  decontextualize: true      # SAFE-style pronoun/vague-reference resolution
+  max_facts_per_sentence: 8
+
+# ---------------------------------------------------------------------------
+# Word mapping (STEP 2B). Longest-common-substring coverage, per sentence,
+# over the original response, following Algorithm 1 of the paper.
+# ---------------------------------------------------------------------------
+word_mapping:
+  min_span_chars: 12         # ignore punctuation-sized uncovered spans
+  min_span_words: 3
+
+# ---------------------------------------------------------------------------
+# Missing relation detection (STEP 2C). PDTB level-1 relations; VERIFACT
+# focuses on temporal and contingency.
+# ---------------------------------------------------------------------------
+missing_relation:
+  target_relations: [temporal, contingency]
+  rule_prefilter: false      # proposed improvement 6, off by default
+  coverage_check: true       # do not add a fact the fact set already covers
+
+# ---------------------------------------------------------------------------
+# Evidence retrieval (STEP 4). Free Wikipedia/Wikimedia search; no Serper.
+# ---------------------------------------------------------------------------
+retrieval:
+  source: wikipedia
+  api_url: https://en.wikipedia.org/w/api.php
+  user_agent: "VERIFACT-Lite/0.1 (research reimplementation of EMNLP 2025 VeriFact; https://github.com/launchnlp/VeriFact)"
+  queries_per_fact: 3
+  pages_per_query: 3
+  max_pages_per_fact: 6
+  top_k: 5
+  ranker: bm25               # bm25 | tfidf
+  min_paragraph_chars: 120
+  cache_dir: data/evidence
+  # Wikimedia rate-limits unauthenticated clients. A failed request is not
+  # cached, so without patient retries it silently becomes "no evidence" for
+  # that claim and two runs of the same pipeline disagree.
+  request_delay_s: 1.0
+  retries: 4
+  backoff_base_s: 5.0
+  backoff_max_s: 60.0
+  request_timeout_s: 30
+
+  offline_only: false        # true = use only cached evidence, never network
+
+# ---------------------------------------------------------------------------
+# Verification (STEP 4). SUPPORTED / CONTRADICTED / UNDECIDED.
+# Absence of evidence is never treated as support.
+# ---------------------------------------------------------------------------
+verification:
+  labels: [SUPPORTED, CONTRADICTED, UNDECIDED]
+  evidence_snippets: 5
+
+# ---------------------------------------------------------------------------
+# Recall. Reference facts come from data/mini_reference.jsonl and are matched
+# against the response by lexical similarity + local LLM entailment.
+# ---------------------------------------------------------------------------
+recall:
+  similarity_threshold: 0.18   # lexical gate before the LLM entailment call
+  llm_confirmation: true
+
+# ---------------------------------------------------------------------------
+# Caching. hash(model + prompt + parameters) -> response.
+# ---------------------------------------------------------------------------
+cache:
+  enabled: true
+  dir: cache
+
+paths:
+  challenge_set: data/challenge_set.jsonl
+  mini_reference: data/mini_reference.jsonl
+  outputs: outputs_colab_b
+
+run:
+  seed: 2024
+  # Release each judge's weights after its detection stages. Needed when the
+  # judges together do not fit in GPU memory, otherwise the backend waits for
+  # the resident model's keep-alive instead of evicting it.
+  unload_between_judges: false
+  limit: null                 # null = all questions in the challenge set
