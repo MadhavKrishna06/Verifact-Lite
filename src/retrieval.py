@@ -110,8 +110,14 @@ class WikipediaRetriever:
         self.offline_only = bool(r.get("offline_only", False))
         self.cache_dir = resolve_path(cfg, r.get("cache_dir", "data/evidence"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.retries = int(r.get("retries", 4))
+        self.backoff_base = float(r.get("backoff_base_s", 5.0))
+        self.backoff_max = float(r.get("backoff_max_s", 60.0))
+        self.request_timeout = float(r.get("request_timeout_s", 30))
         self.network_calls = 0
         self.cache_hits = 0
+        self.transient_failures = 0
+        self.hard_failures = 0
 
     # -- caching ------------------------------------------------------------
     def _cache_path(self, kind: str, key: str) -> Path:
@@ -153,6 +159,46 @@ class WikipediaRetriever:
         return queries[: self.queries_per_fact] or [claim[:200]]
 
     # -- Wikipedia API ------------------------------------------------------
+    def _get(self, params: dict) -> dict | None:
+        """GET with retries. A failed request is never cached, so without
+        retries a transient failure silently becomes 'no evidence' for that
+        claim, and a later run that succeeds produces different labels."""
+        last: Exception | None = None
+        for attempt in range(self.retries + 1):
+            try:
+                resp = requests.get(
+                    self.api_url,
+                    params=params,
+                    headers={"User-Agent": self.user_agent},
+                    timeout=self.request_timeout,
+                )
+                self.network_calls += 1
+                time.sleep(self.delay)
+                if resp.status_code == 200:
+                    return resp.json()
+                if resp.status_code in (429, 500, 502, 503, 504):
+                    self.transient_failures += 1
+                    # Wikimedia asks clients to honour Retry-After; 429 means we
+                    # are sending too fast, so the wait must grow, not retry hot.
+                    wait = self.backoff_base * (2**attempt)
+                    header = resp.headers.get("Retry-After")
+                    if header:
+                        try:
+                            wait = max(wait, float(header))
+                        except ValueError:
+                            pass
+                    time.sleep(min(wait, self.backoff_max))
+                    continue
+                self.hard_failures += 1
+                return None
+            except requests.RequestException as exc:
+                last = exc
+                self.transient_failures += 1
+                time.sleep(min(self.backoff_base * (2**attempt), self.backoff_max))
+        self.hard_failures += 1
+        print(f"[warn] wikipedia request gave up after {self.retries + 1} tries: {last or 'HTTP 429/5xx'}")
+        return None
+
     def search(self, query: str) -> list[dict]:
         cached = self._cached("search", f"{query}|{self.pages_per_query}")
         if cached is not None:
@@ -160,29 +206,19 @@ class WikipediaRetriever:
             return cached
         if self.offline_only:
             return []
-        params = {
-            "action": "query",
-            "list": "search",
-            "srsearch": query,
-            "srlimit": self.pages_per_query,
-            "format": "json",
-        }
-        try:
-            resp = requests.get(
-                self.api_url,
-                params=params,
-                headers={"User-Agent": self.user_agent},
-                timeout=30,
-            )
-            self.network_calls += 1
-            time.sleep(self.delay)
-            if resp.status_code != 200:
-                return []
-            hits = resp.json().get("query", {}).get("search", [])
-            results = [{"title": h.get("title", ""), "pageid": h.get("pageid")} for h in hits]
-        except requests.RequestException as exc:
-            print(f"[warn] wikipedia search failed for {query!r}: {exc}")
+        payload = self._get(
+            {
+                "action": "query",
+                "list": "search",
+                "srsearch": query,
+                "srlimit": self.pages_per_query,
+                "format": "json",
+            }
+        )
+        if payload is None:
             return []
+        hits = payload.get("query", {}).get("search", [])
+        results = [{"title": h.get("title", ""), "pageid": h.get("pageid")} for h in hits]
         self._store("search", f"{query}|{self.pages_per_query}", results)
         return results
 
@@ -193,39 +229,30 @@ class WikipediaRetriever:
             return cached
         if self.offline_only:
             return {}
-        params = {
-            "action": "query",
-            "prop": "extracts",
-            "explaintext": 1,
-            "titles": title,
-            "format": "json",
-            "redirects": 1,
-        }
-        try:
-            resp = requests.get(
-                self.api_url,
-                params=params,
-                headers={"User-Agent": self.user_agent},
-                timeout=30,
-            )
-            self.network_calls += 1
-            time.sleep(self.delay)
-            if resp.status_code != 200:
-                return {}
-            pages = resp.json().get("query", {}).get("pages", {})
-            for _, page in pages.items():
-                if "extract" not in page:
-                    continue
-                payload = {
-                    "title": page.get("title", title),
-                    "url": "https://en.wikipedia.org/wiki/"
-                    + page.get("title", title).replace(" ", "_"),
-                    "extract": page.get("extract", ""),
-                }
-                self._store("page", title, payload)
-                return payload
-        except requests.RequestException as exc:
-            print(f"[warn] wikipedia fetch failed for {title!r}: {exc}")
+        data = self._get(
+            {
+                "action": "query",
+                "prop": "extracts",
+                "explaintext": 1,
+                "titles": title,
+                "format": "json",
+                "redirects": 1,
+            }
+        )
+        if data is None:
+            return {}
+        pages = data.get("query", {}).get("pages", {})
+        for _, page in pages.items():
+            if "extract" not in page:
+                continue
+            payload = {
+                "title": page.get("title", title),
+                "url": "https://en.wikipedia.org/wiki/"
+                + page.get("title", title).replace(" ", "_"),
+                "extract": page.get("extract", ""),
+            }
+            self._store("page", title, payload)
+            return payload
         return {}
 
     # -- paragraphs ---------------------------------------------------------
@@ -283,6 +310,8 @@ class WikipediaRetriever:
         return {
             "network_calls": self.network_calls,
             "cache_hits": self.cache_hits,
+            "transient_failures": self.transient_failures,
+            "hard_failures": self.hard_failures,
             "offline_only": self.offline_only,
             "ranker": self.ranker,
         }

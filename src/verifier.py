@@ -13,6 +13,7 @@ from . import prompts
 from .utils import (
     Evidence,
     first_label,
+    normalize_for_match,
     parse_json_loose,
     token_overlap_recall,
 )
@@ -42,6 +43,8 @@ class FactVerifier:
                 "label": "UNDECIDED",
                 "confidence": 0.0,
                 "evidence_ids": [],
+                "quote": None,
+                "grounded": False,
                 "reason": "No evidence retrieved; absence of evidence is not support.",
                 "queries": queries,
                 "evidence": [],
@@ -71,8 +74,31 @@ class FactVerifier:
 
         valid_ids = {e.id for e in evidence}
         ids = [i for i in ids if i in valid_ids]
+        quote = parsed.get("quote") if isinstance(parsed, dict) else None
+        quote = quote.strip() if isinstance(quote, str) and quote.strip() else None
+
+        # Grounding check. A small verifier will happily rubber-stamp SUPPORTED,
+        # so a decisive verdict has to be backed by a sentence that really occurs
+        # in the evidence. If the quote cannot be found, the verdict is not
+        # grounded and becomes UNDECIDED.
+        grounded = False
+        if quote:
+            needle = normalize_for_match(quote)
+            for ev in evidence:
+                if needle and needle in normalize_for_match(ev.snippet):
+                    grounded = True
+                    if ev.id not in ids:
+                        ids.append(ev.id)
+                    break
+
+        if label in ("SUPPORTED", "CONTRADICTED") and not grounded:
+            label = "UNDECIDED"
+            reason = (
+                reason + " | downgraded to UNDECIDED: no verbatim supporting quote found in the evidence"
+            ).strip()
+            confidence = min(confidence, 0.3)
+
         if label == "SUPPORTED" and not ids:
-            # A SUPPORTED verdict must point at evidence; otherwise it is not grounded.
             best = max(evidence, key=lambda e: token_overlap_recall(claim, e.snippet))
             if token_overlap_recall(claim, best.snippet) >= 0.4:
                 ids = [best.id]
@@ -85,6 +111,8 @@ class FactVerifier:
             "label": label,
             "confidence": max(0.0, min(1.0, confidence)),
             "evidence_ids": ids,
+            "quote": quote,
+            "grounded": grounded,
             "reason": reason,
             "queries": queries,
             "evidence": [e.to_dict() for e in evidence],

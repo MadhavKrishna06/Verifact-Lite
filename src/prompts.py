@@ -356,27 +356,43 @@ Output:"""
 # ---------------------------------------------------------------------------
 # STEP 4 - Fact verification
 # ---------------------------------------------------------------------------
-VERIFY_PROMPT = """You are a careful fact-checker. Decide whether the evidence supports the claim.
+VERIFY_PROMPT = """You are a careful fact-checker. Decide what the evidence says about the claim.
 
 Labels:
-* SUPPORTED: the evidence directly supports the claim.
-* CONTRADICTED: the evidence conflicts with the claim.
-* UNDECIDED: the evidence does not contain enough information to decide.
+* SUPPORTED: a sentence in the evidence states the claim, or clearly implies it.
+* CONTRADICTED: a sentence in the evidence states something incompatible with the claim.
+* UNDECIDED: no sentence in the evidence settles the claim either way.
 
 Rules:
-* Absence of evidence is NOT support. If the evidence does not address the claim, answer UNDECIDED.
-* Judge only against the evidence below, not your own knowledge.
-* If the claim states a condition, comparison or cause-effect relation, that part must also be supported.
-* Cite the evidence ids you relied on.
+* Work only from the evidence below. Ignore what you believe about the world.
+* First find the one sentence that decides the claim, and copy it EXACTLY into "quote".
+* If you cannot copy such a sentence, the label is UNDECIDED and "quote" is null.
+* Absence of evidence is NOT support.
+* A claim that states a condition, a comparison target or a cause-effect link is SUPPORTED only when the evidence covers that part too.
+* Watch for the opposite of the claim: if the evidence says the reverse, that is CONTRADICTED, not SUPPORTED.
 
-# Claim
-{claim}
+# Example
+Claim: Aluminium is the rarest metal in the Earth's crust.
+Evidence: [E1] (Aluminium) Aluminium is the most abundant metal in the Earth's crust and the third most abundant element.
+Output: {{"label": "CONTRADICTED", "confidence": 0.95, "evidence_ids": ["E1"], "quote": "Aluminium is the most abundant metal in the Earth's crust", "reason": "The evidence calls aluminium the most abundant metal, the opposite of rarest."}}
 
-# Evidence
+# Example
+Claim: The Montreal Protocol was signed in 1987.
+Evidence: [E1] (Montreal Protocol) The Montreal Protocol on Substances That Deplete the Ozone Layer was agreed on 16 September 1987.
+Output: {{"label": "SUPPORTED", "confidence": 0.9, "evidence_ids": ["E1"], "quote": "agreed on 16 September 1987", "reason": "The evidence gives the 1987 signing date."}}
+
+# Example
+Claim: The Panama Canal opened in 1950.
+Evidence: [E1] (Panama Canal) The canal uses a system of locks to lift ships to Gatun Lake, 26 metres above sea level.
+Output: {{"label": "UNDECIDED", "confidence": 0.2, "evidence_ids": [], "quote": null, "reason": "The evidence describes the locks and says nothing about an opening date."}}
+
+# Your Task
+Claim: {claim}
+
+Evidence:
 {evidence}
 
-Return ONLY this JSON object:
-{{"label": "SUPPORTED | CONTRADICTED | UNDECIDED", "confidence": 0.0 to 1.0, "evidence_ids": ["E1"], "reason": "one short sentence"}}
+Return ONLY a JSON object with the keys label, confidence, evidence_ids, quote, reason. Copy "quote" verbatim from the evidence, or use null.
 
 Output:"""
 

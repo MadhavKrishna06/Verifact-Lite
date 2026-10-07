@@ -105,7 +105,7 @@ missing_relation:
 retrieval:
   source: wikipedia
   api_url: https://en.wikipedia.org/w/api.php
-  user_agent: "VERIFACT-Lite/0.1 (local research reimplementation)"
+  user_agent: "VERIFACT-Lite/0.1 (research reimplementation of EMNLP 2025 VeriFact; https://github.com/launchnlp/VeriFact)"
   queries_per_fact: 3
   pages_per_query: 3
   max_pages_per_fact: 6
@@ -113,7 +113,15 @@ retrieval:
   ranker: bm25               # bm25 | tfidf
   min_paragraph_chars: 120
   cache_dir: data/evidence
-  request_delay_s: 0.2
+  # Wikimedia rate-limits unauthenticated clients. A failed request is not
+  # cached, so without patient retries it silently becomes "no evidence" for
+  # that claim and two runs of the same pipeline disagree.
+  request_delay_s: 1.0
+  retries: 4
+  backoff_base_s: 5.0
+  backoff_max_s: 60.0
+  request_timeout_s: 30
+
   offline_only: false        # true = use only cached evidence, never network
 
 # ---------------------------------------------------------------------------
