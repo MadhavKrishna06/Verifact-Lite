@@ -80,6 +80,22 @@ def main() -> None:
         else:
             print(f"  {label:<18} (none recorded)")
 
+    print("\n=== Ensemble rule: union vs majority ===")
+    for label, run in runs:
+        print(f"  {label}")
+        for rule, key in (("union", "ablation"), ("majority", "ablation_majority")):
+            table = run.get(key) or {}
+            row = table.get("D")
+            if not row:
+                print(f"    {rule:<10} (not run)")
+                continue
+            print(
+                f"    {rule:<10} incomplete={float(row.get('incomplete_rate', 0)):.3f}"
+                f"  missing={int(row.get('missing_relations', 0)):<3}"
+                f"  precision={float(row.get('precision', 0)):.4f}"
+                f"  F1={float(row.get('f1', 0)):.4f}"
+            )
+
     print("\n=== Judge ablation ===")
     for label, run in runs:
         print(f"  {label}")
