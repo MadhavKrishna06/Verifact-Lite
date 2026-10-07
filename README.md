@@ -185,6 +185,12 @@ python -m experiments.compare
 python demo.py
 ```
 
+The ensemble rule can be overridden per run. Union is the paper's rule; a majority run reuses the cached judge decisions, so it costs almost nothing after the union run and writes `outputs/ablation_majority.*`, which `compare.py` then reports as an extra table:
+
+```bash
+python -m experiments.run_ablation --ensemble majority
+```
+
 `demo.py` walks one example through every stage and prints the intermediate output; `python demo.py --qid Q03` runs a question from the challenge set, `--no-verify` stops before retrieval.
 
 Optional UI:
@@ -205,6 +211,8 @@ python -m pytest tests -q
 * Every Wikipedia response is cached under `data/evidence/`. Setting `retrieval.offline_only: true` forbids the network and runs purely from that cache.
 * `outputs/answers.json` stores the generated answers. All later runs reuse it, which is what guarantees baseline and VERIFACT-Lite see byte-identical answers. Delete it to regenerate.
 * `--limit N` runs only the first N questions.
+* **Run one experiment process at a time.** Two concurrent runs fight over the GPU and each model swap costs ~20 s, which is far more than the inference itself.
+* Two 3B Q4_K_M judges do not fit in 4 GB of VRAM together. The pipeline drives one judge at a time over the whole fact list and then releases its weights (`run.unload_between_judges`), so each question pays a couple of model loads instead of one per call. Set it to `false` if your GPU holds every judge at once.
 
 ## Results
 
@@ -279,7 +287,7 @@ verifact-lite/
 4. **Evidence ranking.** Local BM25 (or TF-IDF + cosine) instead of FactCheck-GPT's cross-encoder reranker.
 5. **Benchmark.** 12 hand-written questions with 3-8 manually verified reference facts each, instead of FACTRBENCH's 1,096 prompts with reference facts from four frontier LLMs and human Reddit answers. Reference facts here were written from authoritative knowledge and are **not** derived from the answer being evaluated, but a 12-question benchmark cannot support the paper's conclusions.
 6. **Baselines.** Only the paper's SAFE-style pipeline is reimplemented as the baseline. FactScore, FactCheck-GPT and VERIFY are not reimplemented, so the paper's Table 2 comparison is not reproduced.
-7. **Incomplete-fact and missing-fact counts** are measured by the same local judge ensemble that drives refinement, not by GPT-4o as in the paper's evaluation. Each variant's incomplete rate is measured on that variant's own output facts — every refined or added fact is sent back through the judges rather than assumed to be fixed — but the measurement is still partly self-referential, and the ablation table should be read with that in mind.
+7. **Incomplete-fact and missing-fact counts** are measured by a local 3B judge, not by GPT-4o as in the paper's evaluation. The paper's split is kept: refinement is driven by the **union** of the judges (recall-first), while the rate *reported* in the tables comes from a single designated measurement judge (`measurement.incomplete_judge`), so the facts are not scored by the same ensemble that selected them. Each variant's rate is measured on that variant's own output facts — every refined or added fact goes back through the judge rather than being assumed fixed. The measurement is still far weaker than GPT-4o's, and a small judge tends to over-flag: in this repo's runs one judge marked nearly every extracted fact dependent. The judge-ablation table reports each judge's detection counts so that behaviour is visible rather than hidden inside the union.
 8. **Metrics.** Precision follows the paper (supported / all extracted facts) and keeps `UNDECIDED` separate; `decided_precision` (supported / (supported + contradicted)) is reported alongside it, which the paper does not do.
 9. **Recall** uses a lexical gate followed by local-LLM entailment, rather than Llama 3.3-70B entailment.
 10. **Generation temperature.** Answers are generated once at temperature 0.7 (the paper uses 1.0 for the benchmarked models); all evaluation calls run at temperature 0.0–0.2 for determinism.

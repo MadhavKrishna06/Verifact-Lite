@@ -310,7 +310,6 @@ def make_charts(out_dir: Path, baseline: dict, verifact: dict, ablation: dict) -
 
     if ablation:
         order = [k for k in ("A", "B", "C", "D") if k in ablation]
-        labels = [ablation[k].get("label", k) if isinstance(ablation[k], dict) else k for k in order]
         labels = [
             {"A": "Baseline", "B": "+Incomplete", "C": "+Relation", "D": "Full"}.get(k, k)
             for k in order
@@ -411,6 +410,28 @@ def results_markdown(summary: dict, ablation: dict, charts: list[str]) -> str:
             )
         lines.append("")
 
+    majority = summary.get("ablation_majority") or {}
+    if majority:
+        lines += [
+            "### Ensemble strategy: union vs majority vote",
+            "",
+            "Both rows use the same judge decisions; only the rule that turns them into a "
+            "refinement decision differs. Union is the paper's rule.",
+            "",
+            "| Strategy | Incomplete rate | Missing relations | Precision | Recall | F1 |",
+            "|---|---|---|---|---|---|",
+        ]
+        for label, table in (("union", ablation), ("majority", majority)):
+            row = (table or {}).get("D")
+            if not row:
+                continue
+            lines.append(
+                f"| {label} | {row.get('incomplete_rate', 0):.3f} | "
+                f"{row.get('missing_relations', 0)} | {row.get('precision', 0):.4f} | "
+                f"{row.get('recall', 0):.4f} | {row.get('f1', 0):.4f} |"
+            )
+        lines.append("")
+
     if change:
         lines += [
             "### Before vs after verification of refined facts",
@@ -465,6 +486,7 @@ def main() -> None:
     baseline_payload = read_json(out_dir / "baseline.json")
     verifact_payload = read_json(out_dir / "verifact.json")
     ablation_payload = read_json(out_dir / "ablation.json")
+    majority_payload = read_json(out_dir / "ablation_majority.json")
 
     if not baseline_payload or not verifact_payload:
         raise SystemExit(
@@ -489,6 +511,7 @@ def main() -> None:
         "baseline": baseline,
         "verifact_lite": verifact,
         "ablation": ablation,
+        "ablation_majority": (majority_payload or {}).get("summaries", {}),
         "improvement": improvement(baseline, verifact),
         "label_change": verifact_payload.get("label_change", {}),
         "judge_ablation": (ablation_payload or verifact_payload).get("judge_ablation", {}),
@@ -501,9 +524,7 @@ def main() -> None:
     judges = (cfg.get("judges") or [])
     challenge = resolve_path(cfg, (cfg.get("paths") or {}).get("challenge_set"))
     n_questions = sum(1 for _ in open(challenge, encoding="utf-8") if _.strip())
-    ref_path = resolve_path(cfg, (cfg.get("paths") or {}).get("mini_reference"))
     n_ref = baseline.get("reference_facts", 0)
-    _ = ref_path
     methodology = METHODOLOGY_TABLE.format(
         judge1=f"{judges[0]['name']} ({judges[0]['model_id']})" if judges else "n/a",
         judge2=f"{judges[1]['name']} ({judges[1]['model_id']})" if len(judges) > 1 else "not used",

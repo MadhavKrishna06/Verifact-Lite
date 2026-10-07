@@ -66,6 +66,13 @@ ensemble:
   strategy: union            # union | majority | weighted
   weighted_threshold: 0.5
 
+# Reporting. The paper refines on the union of three judges but measures the
+# incomplete-fact rate with a single model (GPT-4o). The same split is kept here:
+# refinement uses the ensemble above, while the rate reported in the tables comes
+# from this one judge, so the facts are not scored by the ensemble that chose them.
+measurement:
+  incomplete_judge: qwen
+
 # ---------------------------------------------------------------------------
 # Fact extraction (STEP 1). Deliberately a faithful, weak SAFE-style
 # baseline: sentence-level decomposition + pronoun-only decontextualization.
@@ -139,4 +146,8 @@ paths:
 
 run:
   seed: 2024
+  # Release each judge's weights after its detection stages. Needed when the
+  # judges together do not fit in GPU memory, otherwise the backend waits for
+  # the resident model's keep-alive instead of evicting it.
+  unload_between_judges: true
   limit: null                 # null = all questions in the challenge set

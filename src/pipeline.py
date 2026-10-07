@@ -85,6 +85,18 @@ class VerifactLitePipeline:
         self.verifier = FactVerifier(self.primary, self.retriever, cfg)
         self.recall_checker = RecallChecker(self.primary, cfg)
         self._verify_cache: dict[str, dict] = {}
+        # With several judges on one small GPU, release each judge's weights
+        # after its stages so the next model can load immediately.
+        self.unload_between_judges = bool(
+            (cfg.get("run") or {}).get("unload_between_judges", True)
+        )
+        # The judge whose labels are REPORTED as the incomplete-fact rate. The
+        # paper measures that rate with a single model (GPT-4o) while refining on
+        # the union of three judges; reporting the union would score the facts
+        # with the very ensemble that selected them.
+        configured = (cfg.get("measurement") or {}).get("incomplete_judge")
+        aliases = [j.alias for j in self.judges]
+        self.measurement_judge = configured if configured in aliases else aliases[0]
 
     # -- logging ------------------------------------------------------------
     def log(self, *parts) -> None:
@@ -117,14 +129,23 @@ class VerifactLitePipeline:
     ) -> dict[str, bool]:
         """Re-run STEP 2A on facts the refinement stage produced.
 
-        Judge-major again, and every call goes through the LLM cache, so the
-        variants that share a refined fact pay for it once.
+        Only the measurement judge runs here, for the same reason the paper
+        measures Incomplete Facts (%) with one model (GPT-4o) while refining on
+        the union of three: scoring with the union that selected the facts for
+        refinement would not be an independent measurement. Calls go through the
+        LLM cache, so variants sharing a refined fact pay for it once.
         """
-        per_judge: dict[str, dict] = {}
+        detector = self._measurement_detector()
+        by_fact = detector.detect_all(question, answer, facts)
+        return {fid: bool(rec["is_incomplete"]) for fid, rec in by_fact.items()}
+
+    def _measurement_detector(self):
+        """The single judge used to report incompleteness, not to drive refinement."""
+        alias = self.measurement_judge
         for detector in self.completeness.detectors:
-            per_judge[detector.judge.alias] = detector.detect_all(question, answer, facts)
-        records = self.completeness.run(question, answer, facts, per_judge=per_judge)
-        return {r["fact_id"]: bool(r["ensemble"]) for r in records}
+            if detector.judge.alias == alias:
+                return detector
+        return self.completeness.detectors[0]
 
     # -- verification with per-run memoisation ------------------------------
     def verify_claim(self, claim: str) -> dict:
@@ -181,13 +202,24 @@ class VerifactLitePipeline:
             per_judge_completeness[alias] = detector.detect_all(question, answer, facts)
             per_judge_relations[alias] = rel_detector.detect_all(answer, spans, facts)
             self.log(f"  judge {alias}: {detector.judge.calls} calls so far")
+            if self.unload_between_judges and len(self.judges) > 1:
+                detector.judge.unload()
 
         detections = self.completeness.run(
             question, answer, facts, per_judge=per_judge_completeness
         )
         result.detections = detections
         n_incomplete = sum(1 for d in detections if d["ensemble"])
-        self.log(f"  STEP 2A: {n_incomplete} incomplete facts (ensemble: {self.completeness.strategy})")
+        measured = per_judge_completeness.get(self.measurement_judge, {})
+        baseline_measured = {
+            fid: bool(rec["is_incomplete"]) for fid, rec in measured.items()
+        }
+        n_measured = sum(1 for v in baseline_measured.values() if v)
+        self.log(
+            f"  STEP 2A: {n_incomplete} incomplete facts flagged for refinement "
+            f"(ensemble: {self.completeness.strategy}); {n_measured} measured as "
+            f"incomplete by judge '{self.measurement_judge}'"
+        )
 
         relation_records = self.relations.run(
             answer, spans, facts, per_judge=per_judge_relations
@@ -272,7 +304,7 @@ class VerifactLitePipeline:
                 if fact.status in ("refined", "added"):
                     flagged = rechecked.get(fact.id, False)
                 else:
-                    flagged = fact.incomplete
+                    flagged = baseline_measured.get(fact.id, fact.incomplete)
                 if flagged:
                     still += 1
                 for entry in fact_dicts:

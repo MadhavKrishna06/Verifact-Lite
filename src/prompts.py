@@ -166,6 +166,33 @@ Context: "Acorns is a financial technology company founded in 2012 that provides
 Claim: "Acorns was founded in 2012."
 Output: {{"is_incomplete": false, "type": "none", "reason": "The claim stands alone and keeps its original meaning."}}
 
+# Example
+Context: "Decarbonizing aviation requires sustainable aviation fuels. They reduce emissions."
+Claim: "They reduce emissions."
+Output: {{"is_incomplete": true, "type": "ambiguous_concept_or_pronoun", "reason": "The pronoun 'they' has no referent inside the claim."}}
+
+# Example
+Context: "The Montreal Protocol was signed in 1987 and phased out chlorofluorocarbons, which destroy stratospheric ozone."
+Claim: "Chlorofluorocarbons destroy stratospheric ozone."
+Output: {{"is_incomplete": false, "type": "none", "reason": "A complete general statement; it needs no context to be understood."}}
+
+# Example
+Context: "Aluminium smelting uses large amounts of electricity, so the metal was expensive until cheap hydroelectric power became available."
+Claim: "Aluminium smelting uses large amounts of electricity."
+Output: {{"is_incomplete": false, "type": "none", "reason": "The claim is self-contained; the causal clause is a separate fact."}}
+
+# Example
+Context: "If the second dose is given too early, the booster effect is weaker."
+Claim: "The booster effect is weaker."
+Output: {{"is_incomplete": true, "type": "omitted_condition_or_source", "reason": "The claim drops the 'if given too early' condition it depends on."}}
+
+# Example
+Context: "Arctic sea ice has declined since satellite records began in 1979."
+Claim: "Arctic sea ice has declined since 1979."
+Output: {{"is_incomplete": false, "type": "none", "reason": "Subject, change and time span are all present in the claim."}}
+
+Judge only the claim in front of you. A short, general, self-contained statement is INDEPENDENT even if the context says more around it. Mark DEPENDENT only when the claim's own meaning changes without the context.
+
 # Your Task
 Question: {question}
 

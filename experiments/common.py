@@ -17,6 +17,12 @@ def base_parser(description: str) -> argparse.ArgumentParser:
     parser.add_argument("--config", default=None, help="path to config.yaml")
     parser.add_argument("--limit", type=int, default=None, help="only run the first N questions")
     parser.add_argument("--quiet", action="store_true", help="suppress per-step logging")
+    parser.add_argument(
+        "--ensemble",
+        choices=["union", "majority", "weighted"],
+        default=None,
+        help="override ensemble.strategy for this run (union is the paper's rule)",
+    )
     return parser
 
 
@@ -24,6 +30,8 @@ def setup(args) -> tuple[dict, VerifactLitePipeline, Path]:
     cfg = load_config(args.config)
     if args.limit:
         cfg.setdefault("run", {})["limit"] = args.limit
+    if getattr(args, "ensemble", None):
+        cfg.setdefault("ensemble", {})["strategy"] = args.ensemble
     out_dir = resolve_path(cfg, (cfg.get("paths") or {}).get("outputs", "outputs"))
     out_dir.mkdir(parents=True, exist_ok=True)
     pipeline = VerifactLitePipeline(cfg, verbose=not args.quiet)

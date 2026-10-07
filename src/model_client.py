@@ -146,6 +146,16 @@ class BaseClient:
     def complete(self, prompt: str, **kwargs) -> str:
         return self.chat([{"role": "user", "content": prompt}], **kwargs)
 
+    def unload(self) -> bool:
+        """Release this model from the backend's memory, if the backend can.
+
+        On a small GPU two quantized judges do not fit at once, and a backend
+        that keeps one model resident will wait for the pinned model's keep-alive
+        to expire instead of evicting it. Unloading explicitly between judges
+        turns that wait into a single model load.
+        """
+        return False
+
     @property
     def backend_name(self) -> str:
         return self.spec.get("backend", "unknown")
@@ -187,6 +197,18 @@ class OllamaClient(BaseClient):
             raise ModelError(f"ollama {resp.status_code}: {resp.text[:400]}")
         data = resp.json()
         return (data.get("message", {}) or {}).get("content", "").strip()
+
+    def unload(self) -> bool:
+        host = self.backend_cfg.get("host", "http://127.0.0.1:11434").rstrip("/")
+        try:
+            resp = requests.post(
+                f"{host}/api/chat",
+                json={"model": self.model_id, "messages": [], "keep_alive": 0},
+                timeout=60,
+            )
+            return resp.status_code == 200
+        except requests.RequestException:
+            return False
 
 
 class LlamaCppServerClient(BaseClient):

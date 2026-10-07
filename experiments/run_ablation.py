@@ -52,8 +52,10 @@ def main() -> None:
     results, answers = pipeline.run_dataset(variant_keys=variant_keys, answers=answers)
     save_answers(out_dir, answers)
 
-    payload = build_payload("ablation", cfg, pipeline, results, variant_keys)
-    write_json(out_dir / "ablation.json", payload)
+    strategy = (cfg.get("ensemble") or {}).get("strategy", "union")
+    stem = "ablation" if strategy == "union" else f"ablation_{strategy}"
+    payload = build_payload(stem, cfg, pipeline, results, variant_keys)
+    write_json(out_dir / f"{stem}.json", payload)
 
     rows = []
     for vkey in variant_keys:
@@ -66,7 +68,7 @@ def main() -> None:
             row[key] = round(value, 4) if isinstance(value, float) else value
         rows.append(row)
 
-    csv_path = out_dir / "ablation.csv"
+    csv_path = out_dir / f"{stem}.csv"
     with open(csv_path, "w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=[name for name, _ in ABLATION_COLUMNS])
         writer.writeheader()
