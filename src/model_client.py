@@ -96,6 +96,8 @@ class BaseClient:
         self.max_tokens = int(spec.get("max_tokens", 2048))
         self.timeout_s = float(spec.get("timeout_s", 600))
         self.weight = float(spec.get("weight", 1.0))
+        self.retries = int(spec.get("retries", 4))
+        self.retry_backoff_s = float(spec.get("retry_backoff_s", 5.0))
         self.cache = cache
         self.backend_cfg = backend_cfg or {}
         self.calls = 0
@@ -120,11 +122,31 @@ class BaseClient:
         if cached is not None:
             return cached
 
+        # A local model server can die mid-run (an hour of calls is a long time
+        # to stay up on a hosted VM). Losing the whole experiment to one refused
+        # connection is worse than waiting for the server to come back, so a
+        # transport failure is retried with backoff before giving up.
         start = time.time()
-        try:
-            text = self._generate(messages, temp, toks)
-        except requests.RequestException as exc:  # pragma: no cover - network
-            raise ModelError(f"{self.backend_name} request failed: {exc}") from exc
+        last: Exception | None = None
+        text = None
+        for attempt in range(self.retries + 1):
+            try:
+                text = self._generate(messages, temp, toks)
+                break
+            except (requests.RequestException, ModelError) as exc:
+                last = exc
+                if attempt == self.retries:
+                    break
+                wait = min(self.retry_backoff_s * (2**attempt), 60.0)
+                print(
+                    f"[warn] {self.backend_name} call failed ({type(exc).__name__}); "
+                    f"retry {attempt + 1}/{self.retries} in {wait:.0f}s"
+                )
+                time.sleep(wait)
+        if text is None:
+            raise ModelError(
+                f"{self.backend_name} request failed after {self.retries + 1} tries: {last}"
+            ) from last
         elapsed = time.time() - start
         self.calls += 1
         self.total_latency_s += elapsed
