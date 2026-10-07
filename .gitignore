@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Cached LLM calls and retrieved evidence (regenerated on demand)
+cache/
+data/evidence/
+
+# Run artefacts
+outputs/*.json
+outputs/*.csv
+outputs/charts/
+outputs/examples/
+!outputs/.gitkeep
+
+# Local GGUF weights
+models/
+*.gguf
+
+.pytest_cache/
+.DS_Store

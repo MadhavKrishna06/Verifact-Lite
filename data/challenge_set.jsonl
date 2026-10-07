@@ -1,0 +1,12 @@
+{"id": "Q01", "question": "If there wasn't a demand for gold as jewelry, would its price drop enough to make it usable in consumer electronics?", "topic": "economics/materials", "targets": ["omitted_condition", "contingency"], "note": "Figure 1 example from the VERIFACT paper; kept as the qualitative centerpiece."}
+{"id": "Q02", "question": "Why is aluminium cheap today when it used to be more valuable than silver?", "topic": "materials/history", "targets": ["temporal", "contingency", "missing_comparison"]}
+{"id": "Q03", "question": "How does a nuclear power plant actually turn uranium into electricity?", "topic": "engineering", "targets": ["temporal", "contingency"]}
+{"id": "Q04", "question": "Why did the Chernobyl reactor explode, and what did operators do just before it happened?", "topic": "history/engineering", "targets": ["temporal", "contingency"]}
+{"id": "Q05", "question": "Why are lithium-ion batteries better than lead-acid batteries for electric cars?", "topic": "engineering", "targets": ["missing_comparison"]}
+{"id": "Q06", "question": "What happens to the human body if cabin pressure is lost at cruising altitude?", "topic": "physiology", "targets": ["omitted_condition", "contingency", "temporal"]}
+{"id": "Q07", "question": "Why does inflation usually fall when a central bank raises interest rates?", "topic": "economics", "targets": ["contingency", "omitted_condition"]}
+{"id": "Q08", "question": "How did the Panama Canal change shipping routes, and what did ships have to do before it opened?", "topic": "history/geography", "targets": ["temporal", "contingency", "missing_comparison"]}
+{"id": "Q09", "question": "Why do vaccines need a second dose weeks after the first one?", "topic": "immunology", "targets": ["temporal", "contingency"]}
+{"id": "Q10", "question": "Why is the ozone layer recovering after the Montreal Protocol was signed?", "topic": "environment", "targets": ["temporal", "contingency", "omitted_condition"]}
+{"id": "Q11", "question": "Why would a supersonic airliner like Concorde be uneconomical to operate today?", "topic": "engineering/economics", "targets": ["omitted_condition", "missing_comparison", "contingency"]}
+{"id": "Q12", "question": "How does Antarctic sea ice differ from Arctic sea ice, and why does melting sea ice not raise sea level much?", "topic": "climate", "targets": ["missing_comparison", "contingency"]}

@@ -1,0 +1,12 @@
+# VERIFACT-Lite dependencies. Everything here is free and runs locally.
+pyyaml>=6.0
+requests>=2.31
+pytest>=7.4
+
+# Optional, used where available
+nltk>=3.8            # better sentence splitting (punkt); a regex fallback exists
+matplotlib>=3.7      # presentation charts in outputs/charts/
+streamlit>=1.30      # optional UI: streamlit run app.py
+
+# Optional model backends. Ollama needs no Python package (HTTP only).
+# llama-cpp-python>=0.2.80   # only for model.backend: llama_cpp_python
