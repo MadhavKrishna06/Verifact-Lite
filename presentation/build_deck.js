@@ -387,9 +387,10 @@ const CHART_BASE = {
  *   13      comparison with the paper
  *   14      future plans and next steps
  *   15      takeaways
+ *   16      backup, not presented
  *
- * Four appendix slides follow for the question period; they are not part of
- * the 15 minutes and can be deleted without touching the talk.
+ * One backup slide follows for the question period; it is not part of the
+ * 15 minutes and can be deleted without touching the talk.
  *
  * Numbers come from three runs over the SAME 12 generated answers:
  *   laptop-3B   Qwen2.5-3B primary, Qwen2.5-3B + Llama-3.2-3B judges
@@ -450,19 +451,36 @@ s.addText(
     margin: 0,
   }
 );
-s.addText("Madhav Krishna", {
+s.addText("By", {
   isTextBox: true,
-  objectName: "cover-by",
+  objectName: "cover-by-label",
   x: M,
-  y: 4.4,
+  y: 4.42,
   w: 11.2,
-  h: 0.32,
-  fontSize: 13,
+  h: 0.26,
+  fontSize: 10,
   bold: true,
-  color: INK,
+  charSpacing: 2,
+  color: MUTED,
   fontFace: "Arial",
   margin: 0,
 });
+s.addText(
+  "Madhav Krishna Arumulla  ·  Sanskar Jadhav  ·  Sri Charan Komati Reddy  ·  Gourav Verma  ·  Trinath Reddy Vundela",
+  {
+    isTextBox: true,
+    objectName: "cover-by",
+    x: M,
+    y: 4.7,
+    w: 11.6,
+    h: 0.32,
+    fontSize: 13,
+    bold: true,
+    color: INK,
+    fontFace: "Arial",
+    margin: 0,
+  }
+);
 // Chips are laid out left to right from one width estimate, so the row stays
 // aligned whatever the labels say.
 let chipX = M;
@@ -477,7 +495,7 @@ let chipX = M;
   s.addShape(pres.ShapeType.roundRect, {
     objectName: "chip" + i,
     x: chipX,
-    y: 5.2,
+    y: 5.35,
     w,
     h: 0.4,
     rectRadius: 0.2,
@@ -488,7 +506,7 @@ let chipX = M;
     isTextBox: true,
     objectName: "chip-t" + i,
     x: chipX,
-    y: 5.2,
+    y: 5.35,
     w,
     h: 0.4,
     fontSize: 11,
@@ -1248,203 +1266,84 @@ s.addNotes(
   "[0:40] Close on points 3 and 4. Point 3 is the finding that generalises beyond this paper. Point 4 is where we corrected ourselves between versions of this talk, which is the honest thing to show. Leave the slide up for the questions."
 );
 
-/* ------------------------------------------------------------- appendix
- * Not part of the 15 minutes. Kept for the question period; delete freely.
+/* --------------------------------------------------------------- backup
+ * One slide, not presented. It answers the four questions the talk
+ * invites; the detail behind it is in README.md and colab/RESULTS.md.
  * ---------------------------------------------------------------------- */
 
-pres.addSection({ title: "Appendix" });
+pres.addSection({ title: "Backup" });
 
-/* A1 — word mapping */
-s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appendix" });
-eyebrow(s, "Appendix — not presented");
-title(s, "Step 2B: word mapping, the paper's Algorithm 1");
-subtitle(s, "How an uncovered span becomes a missing-relation candidate");
-const cA1 = col(0, 2);
-const cA2 = col(1, 2);
-s.addText(
-  [
-    { text: "For each fact, take its longest common substring with the response.", options: { bullet: { type: "number" }, breakLine: true } },
-    { text: "Mark those response characters as covered.", options: { bullet: { type: "number" }, breakLine: true } },
-    { text: "Collect the contiguous runs that stayed uncovered.", options: { bullet: { type: "number" }, breakLine: true } },
-    { text: "Send those spans to the judges as missing-relation candidates.", options: { bullet: { type: "number" } } },
-  ],
-  { isTextBox: true, objectName: "algo", x: cA1.x, y: TOP, w: cA1.w, h: 1.6, fontSize: 13.5, color: BODY, fontFace: "Arial", paraSpaceAfter: 6, margin: 0 }
-);
+/* 16 — backup for the question period */
+s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Backup" });
+eyebrow(s, "Backup — not presented");
+title(s, "Detail behind the four most likely questions");
+subtitle(s, "Word mapping, the uncontrolled run, what the refiner writes, and the engineering hazards");
+const cK1 = col(0, 2);
+const cK2 = col(1, 2);
 card(s, {
-  name: "impl",
-  x: cA1.x,
-  y: 3.5,
-  w: cA1.w,
-  h: 1.7,
-  panel: true,
-  heading: "Implementation",
-  body:
-    "Normalization for case, whitespace and line breaks is index-preserving — one character in, one character out — so span offsets still point into the original answer.",
-  bodySize: 12,
-});
-card(s, { name: "cov-box", x: cA2.x, y: TOP, w: cA2.w, h: 1.6, panel: true });
-s.addText(
-  [
-    { text: "If the demand for gold as jewelry were to disappear, ", options: { color: MUTED } },
-    { text: "making it more competitive with other materials like ", options: { color: ACCENT, bold: true } },
-    { text: "copper and silver.", options: { color: MUTED } },
-  ],
-  { isTextBox: true, objectName: "cov-text", x: cA2.x + 0.28, y: TOP + 0.2, w: cA2.w - 0.56, h: 0.9, fontSize: 12.5, fontFace: "Arial", lineSpacingMultiple: 1.2, margin: 0 }
-);
-s.addText("grey = matched by some fact   ·   scarlet = uncovered span", {
-  isTextBox: true,
-  objectName: "cov-key",
-  x: cA2.x + 0.28,
-  y: TOP + 1.14,
-  w: cA2.w - 0.56,
-  h: 0.26,
-  fontSize: 10,
-  color: MUTED,
-  fontFace: "Arial",
-  margin: 0,
-});
-card(s, {
-  name: "twoq",
-  x: cA2.x,
-  y: 3.5,
-  w: cA2.w,
-  h: 1.7,
-  heading: "Then two judge questions",
-  body: "1. Does the span express a temporal or contingency relation?\n2. Does any single existing fact already capture it?",
-  bodySize: 12,
-});
-[
-  ["Character coverage", "0.55–0.59", "of the response matched", false],
-  ["Candidate spans found", "73", "across 12 answers", false],
-  ["Fact added only when", "relation ∧ ¬covered", "both judge questions pass", true],
-].forEach(([l, v, f, e], i) => {
-  const c = col(i, 3);
-  stat(s, { name: "wm" + i, x: c.x, y: 5.4, w: c.w, label: l, value: v, foot: f, emph: e, valueSize: i === 2 ? 16 : 22 });
-});
-note(s, "Kept lexical, as in the paper. A semantic variant is listed as future work rather than silently substituted.");
-s.addNotes("Appendix. Use if asked how missing relations are found.");
-
-/* A2 — qualitative examples */
-s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appendix" });
-eyebrow(s, "Appendix — not presented");
-title(s, "What a 3B refiner actually produces");
-subtitle(s, "One case that works, one that does not, and one added relation");
-const cB1 = col(0, 2);
-const cB2 = col(1, 2);
-card(s, { name: "good", x: cB1.x, y: TOP, w: cB1.w, h: 3.1, accent: true, heading: "Works — Q10, ozone layer" });
-s.addText(
-  [
-    { text: "omitted_condition_or_source", options: { color: MUTED, fontSize: 10.5, breakLine: true } },
-    { text: "before   “These substances are in the atmosphere.”", options: { breakLine: true } },
-    { text: "after     “The substances are in the atmosphere since the Montreal Protocol was signed.”", options: { breakLine: true } },
-    { text: "UNDECIDED → SUPPORTED", options: { color: ACCENT, bold: true, fontSize: 11.5, breakLine: true } },
-    { text: " ", options: { fontSize: 6, breakLine: true } },
-    { text: "missing_comparison", options: { color: MUTED, fontSize: 10.5, breakLine: true } },
-    { text: "before   “The decrease is in the concentration of substances.”", options: { breakLine: true } },
-    { text: "after     “… compared to before the Montreal Protocol.”", options: { breakLine: true } },
-    { text: "UNDECIDED → SUPPORTED", options: { color: ACCENT, bold: true, fontSize: 11.5 } },
-  ],
-  { isTextBox: true, objectName: "good-t", x: cB1.x + 0.28, y: 2.3, w: cB1.w - 0.56, h: 2.45, fontSize: 11.5, color: BODY, fontFace: "Arial", lineSpacingMultiple: 1.15, margin: 0 }
-);
-card(s, { name: "bad", x: cB2.x, y: TOP, w: cB2.w, h: 3.1, heading: "Fails — Q01, the paper's own example" });
-s.addText(
-  [
-    { text: "the refiner flipped the meaning", options: { color: MUTED, fontSize: 10.5, breakLine: true } },
-    { text: "before   “There was demand for gold as jewelry.”", options: { breakLine: true } },
-    { text: "after     “There was no demand for gold as jewelry.”", options: { breakLine: true } },
-    { text: "The hypothetical from the question was pasted into a fact stating the opposite.", options: { color: ACCENT, fontSize: 11.5, breakLine: true } },
-    { text: " ", options: { fontSize: 6, breakLine: true } },
-    { text: "condition attached to the wrong claim", options: { color: MUTED, fontSize: 10.5, breakLine: true } },
-    { text: "“Gold has unique properties of malleability if there was no demand for gold as jewelry.”", options: { breakLine: true } },
-    { text: "SUPPORTED → UNDECIDED", options: { color: ACCENT, bold: true, fontSize: 11.5 } },
-  ],
-  { isTextBox: true, objectName: "bad-t", x: cB2.x + 0.28, y: 2.3, w: cB2.w - 0.56, h: 2.45, fontSize: 11.5, color: BODY, fontFace: "Arial", lineSpacingMultiple: 1.15, margin: 0 }
-);
-card(s, {
-  name: "added",
-  x: M,
-  y: 5.05,
-  w: W,
-  h: 1.25,
-  panel: true,
-  heading: "Added relational fact — Q04, Chernobyl, temporal",
-  headingSize: 13,
-  body:
-    "“The experiment just before the explosion caused the reactor to exceed its design limits, resulting in the explosion of hydrogen gas in the pressure vessel.”  The span that produced it was never covered by any extracted fact.",
-  bodySize: 12,
-});
-note(s, "6 examples auto-selected into outputs/examples/presentation_examples.json, ranked by label changes and error type.");
-s.addNotes("Appendix. Use if asked what the refiner actually writes, or why a stronger model was the first thing tested.");
-
-/* A3 — full future-work list */
-s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appendix" });
-eyebrow(s, "Appendix — not presented");
-title(s, "Full ranked list of proposed improvements");
-subtitle(s, "The first two items are measured; the rest are proposals");
-const cC1 = col(0, 2);
-const cC2 = col(1, 2);
-card(s, { name: "a-meas", x: cC1.x, y: TOP, w: cC1.w, h: 4.55, accent: true, heading: "Measurement quality" });
-s.addText(
-  [
-    { text: "Stronger local judge — tested, 7–8B on a T4", options: { bullet: true, breakLine: true } },
-    { text: "Majority vote over union — tested, higher precision", options: { bullet: true, breakLine: true } },
-    { text: "Third judge plus self-consistency", options: { bullet: true, breakLine: true } },
-    { text: "Verification ensemble — LLM verdict plus an NLI model", options: { bullet: true, breakLine: true } },
-    { text: "Evidence-aware verification — name the span, then judge", options: { bullet: true, breakLine: true } },
-    { text: "One fixed entailment model for recall across all runs", options: { bullet: true, breakLine: true } },
-    { text: "Better reference sets — several answers, human verification", options: { bullet: true, breakLine: true } },
-    { text: "Calibration of the three label thresholds", options: { bullet: true } },
-  ],
-  { isTextBox: true, objectName: "a-meas-l", x: cC1.x + 0.28, y: 2.35, w: cC1.w - 0.56, h: 3.8, fontSize: 12.5, color: BODY, fontFace: "Arial", paraSpaceAfter: 8, margin: 0 }
-);
-card(s, { name: "a-econ", x: cC2.x, y: TOP, w: cC2.w, h: 4.55, heading: "Retrieval, cost and coverage" });
-s.addText(
-  [
-    { text: "Query expansion, dense embeddings, cross-encoder reranking", options: { bullet: true, breakLine: true } },
-    { text: "Iterative refinement, maximum two passes", options: { bullet: true, breakLine: true } },
-    { text: "Hybrid rule + LLM relation detection (implemented, off)", options: { bullet: true, breakLine: true } },
-    { text: "Adaptive evidence count, driven by uncertainty", options: { bullet: true, breakLine: true } },
-    { text: "Knowledge-source diversification, routed by claim type", options: { bullet: true, breakLine: true } },
-    { text: "Claim difficulty routing — small model, then large", options: { bullet: true, breakLine: true } },
-    { text: "Fine-tuned detector; distillation from a large open teacher", options: { bullet: true, breakLine: true } },
-    { text: "The remaining baselines: FactScore, FactCheck-GPT, VERIFY", options: { bullet: true } },
-  ],
-  { isTextBox: true, objectName: "a-econ-l", x: cC2.x + 0.28, y: 2.35, w: cC2.w - 0.56, h: 3.8, fontSize: 12.5, color: BODY, fontFace: "Arial", paraSpaceAfter: 8, margin: 0 }
-);
-note(s, "Each proposal names the metric it is expected to move. None of them is claimed as a result.");
-s.addNotes("Appendix. Use if asked what else you would do.");
-
-/* A4 — run B and known hazards */
-s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appendix" });
-eyebrow(s, "Appendix — not presented");
-title(s, "Run B, and known hazards");
-subtitle(s, "The uncontrolled run, and the engineering problems behind these numbers");
-card(s, {
-  name: "expb",
-  x: M,
+  name: "bk-wm",
+  x: cK1.x,
   y: TOP,
-  w: W,
-  h: 1.95,
+  w: cK1.w,
+  h: 2.3,
+  heading: "How missing relations are found — Algorithm 1",
+  headingSize: 13.5,
+  body: [
+    "Take each fact's longest common substring with the response, mark those characters covered, collect the runs that stayed uncovered, and send them to the judges. Normalization is index-preserving, so offsets still point into the original answer.",
+    "Coverage 0.55–0.59.  73 candidate spans.  A fact is added only when the span expresses a temporal or contingency relation AND no single existing fact already captures it.",
+  ].join("\n"),
+  bodySize: 10.5,
+});
+card(s, {
+  name: "bk-b",
+  x: cK2.x,
+  y: TOP,
+  w: cK2.w,
+  h: 2.3,
+  panel: true,
+  heading: "Run B — the whole pipeline at 7B, extractor included",
+  headingSize: 13.5,
+  body: [
+    "Baseline 15.92 facts per answer against 21.50, incomplete rate 0.319, precision 0.5050. Refinement then costs −0.025 precision, against −0.118 in run A.",
+    "A stronger extractor writes fewer, coarser, self-contained facts, so there is less to repair — the trade the paper notes for VERIFY (18.5 facts per response against VeriFact's 32.3).",
+    "B changed four things at once, so it reads only against its own baseline.",
+  ].join("\n"),
+  bodySize: 10.5,
+});
+card(s, {
+  name: "bk-q",
+  x: cK1.x,
+  y: 4.25,
+  w: cK1.w,
+  h: 2.3,
   panel: true,
   accent: true,
-  heading: "Run B — the whole pipeline at 7B, including the extractor",
+  heading: "What the 3B refiner actually writes",
   headingSize: 13.5,
-  body:
-    "Baseline: 15.92 facts per answer against 21.50, incomplete rate 0.319, precision 0.5050. Refinement then costs far less precision (−0.025, against −0.118 in run A).\n" +
-    "A stronger extractor writes fewer, coarser, more self-contained facts, so there is less to repair — the same trade the paper notes for VERIFY (18.5 facts per response against VeriFact's 32.3).\n" +
-    "B changed the extractor, the judge, the verifier and the recall entailment model at once, so its columns read only against its own baseline.",
-  bodySize: 11.5,
+  body: [
+    "Works — Q10:  “These substances are in the atmosphere.” becomes “… since the Montreal Protocol was signed.”   UNDECIDED → SUPPORTED.",
+    "Fails — Q01:  “There was demand for gold as jewelry.” becomes “There was NO demand …”. The hypothetical from the question was pasted into a fact stating the opposite.",
+    "Added relation — Q04:  “The experiment just before the explosion caused the reactor to exceed its design limits …”",
+  ].join("\n"),
+  bodySize: 10.5,
 });
-[
-  ["GPU hazard", "Two 3B Q4_K_M judges do not fit in 4 GB. The pipeline drives one judge at a time over the whole fact list, then releases its weights — otherwise the backend waits for the resident model's keep-alive and every call pays a ~20 s model load."],
-  ["Retrieval hazard", "Wikipedia rate-limits unauthenticated clients. Failed requests are not cached, so without retries a 429 silently becomes “no evidence” and two runs of the same pipeline disagree. Fixed with retries, backoff and Retry-After."],
-  ["Reproducibility", "Every LLM call is cached under hash(model + prompt + parameters), every page on disk. Temperature-0 decoding is not bit-reproducible until the cache is warm; all three runs replay exactly from the shipped caches."],
-].forEach(([h, b], i) => {
-  const c = col(i, 3);
-  card(s, { name: "haz" + i, x: c.x, y: 4.0, w: c.w, h: 2.3, heading: h, headingSize: 13, body: b, bodySize: 11 });
+card(s, {
+  name: "bk-haz",
+  x: cK2.x,
+  y: 4.25,
+  w: cK2.w,
+  h: 2.3,
+  heading: "Engineering hazards behind these numbers",
+  headingSize: 13.5,
+  body: [
+    "GPU:  two 3B Q4_K_M judges do not fit in 4 GB, so the pipeline drives one judge over the whole fact list, then releases its weights — otherwise every call pays a ~20 s model load.",
+    "Retrieval:  Wikipedia rate-limits unauthenticated clients and failures are not cached, so without retries a 429 silently becomes “no evidence”. Fixed with retries and backoff.",
+    "Replay:  every LLM call is cached under hash(model + prompt + parameters).",
+  ].join("\n"),
+  bodySize: 10.5,
 });
-note(s, "Full write-up in colab/RESULTS.md; all three runs reproduce from one command with no GPU.");
-s.addNotes("Appendix. Use if asked about run B or about engineering problems.");
+note(s, "Full write-up in README.md and colab/RESULTS.md. All three runs reproduce from one command with no GPU.");
+s.addNotes("Backup. Not part of the 15 minutes.");
 
 /* ------------------------------------------------------------------ write */
 
