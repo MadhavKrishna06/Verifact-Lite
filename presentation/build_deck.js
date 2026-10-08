@@ -765,7 +765,7 @@ card(s, {
   y: 2.5,
   w: c6a.w,
   h: 1.5,
-  heading: "Baseline — variant A",
+  heading: "Baseline — no refinement",
   body: "SAFE-style extraction  →  retrieval and verification",
   bodySize: 13,
 });
@@ -776,7 +776,7 @@ card(s, {
   w: c6b.w,
   h: 1.5,
   accent: true,
-  heading: "VERIFACT-Lite — variant D",
+  heading: "VERIFACT-Lite — with refinement",
   body: "The same facts  →  detect  →  refine and add  →  the same retrieval and verification",
   bodySize: 13,
 });
@@ -790,7 +790,7 @@ card(s, {
 });
 note(s, "Verification is grounded: a SUPPORTED or CONTRADICTED verdict without a verbatim quote from the evidence is downgraded to UNDECIDED.");
 s.addNotes(
-  "[0:50] The key methodological point: the answer is generated once, so baseline and VERIFACT-Lite differ only in whether refinement runs. Read the recall definition out loud — it explains why recall never moves between variants."
+  "[0:50] The key methodological point: the answer is generated once, so the baseline and VERIFACT-Lite differ only in whether refinement runs. Read the recall definition out loud — it explains why recall never moves between the two."
 );
 
 /* 7 — recreating 3/5: headline results  [1:30] */
@@ -864,21 +864,21 @@ table(s, {
   fontSize: 12.5,
   head: ["System", "Incomplete", "Missing", "Precision", "Recall", "F1"],
   rows: [
-    ["A  Baseline", "0.105", "51", "0.4200", "0.4077", "0.4138"],
-    ["B  + incomplete refine", "0.078", "51", "0.3680", "0.4077", "0.3868"],
-    ["C  + missing relation", "0.113", "0", "0.3839", "0.4077", "0.3954"],
-    ["D  Full VERIFACT-Lite", { text: "0.091", emph: true }, { text: "0", emph: true }, "0.3426", "0.4077", "0.3723"],
+    ["Baseline", "0.105", "51", "0.4200", "0.4077", "0.4138"],
+    ["+ incomplete-fact refinement", "0.078", "51", "0.3680", "0.4077", "0.3868"],
+    ["+ missing-relation recovery", "0.113", "0", "0.3839", "0.4077", "0.3954"],
+    ["Full VERIFACT-Lite", { text: "0.091", emph: true }, { text: "0", emph: true }, "0.3426", "0.4077", "0.3723"],
   ],
 });
 [
-  ["B isolates the refiner", "Incomplete rate drops 0.105 → 0.078, the largest single gain, and precision falls with it."],
-  ["C isolates relation recovery", "All 51 missing relations become facts. The incomplete rate ticks up because the new facts are judged too."],
-  ["The effects are additive", "D inherits B's lower incomplete rate and C's zero missing relations — and both precision costs."],
+  ["Incomplete refinement alone", "Incomplete rate drops 0.105 → 0.078, the largest single gain, and precision falls with it."],
+  ["Relation recovery alone", "All 51 missing relations become facts. The incomplete rate ticks up because the new facts are judged too."],
+  ["The effects are additive", "The full system inherits the lower incomplete rate and the zero missing relations — and both precision costs."],
 ].forEach(([h, b], i) => {
   const c = col(i, 3);
   card(s, { name: "abl" + i, x: c.x, y: 4.3, w: c.w, h: 1.95, panel: true, heading: h, headingSize: 13.5, body: b, bodySize: 12 });
 });
-note(s, "All four variants scored on one identical answer set, union ensemble, as in the paper.");
+note(s, "All four systems scored on one identical answer set, union ensemble, as in the paper.");
 s.addNotes(
   "[0:45] Walk the table once, then read the three card headings only. Each half of the contribution moves its own metric, and the two compose."
 );
