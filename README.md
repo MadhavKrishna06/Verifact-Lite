@@ -13,7 +13,7 @@ This repository reimplements the central VERIFACT fact-refinement mechanism unde
 
 Official implementation: **https://github.com/launchnlp/VeriFact**
 
-The paper is the authoritative source for the methodology here. The official repository was read as an implementation reference: the word-mapping algorithm, the two-stage missing-relation check (detect the relation, then confirm no existing fact covers it), the SAFE-style decomposition few-shot prompt, the decontextualization prompt, and the markdown-code-block output convention all follow it.
+The paper is the authoritative source for the methodology here. The official repository was read as an implementation reference: the span-coverage step, the two-stage missing-relation check (detect the relation, then confirm no existing fact covers it), the SAFE-style decomposition few-shot prompt, the decontextualization prompt, and the markdown-code-block output convention all follow it.
 
 ## Scope and honest claims
 
@@ -46,7 +46,7 @@ flowchart TD
     S1 --> F[Extracted facts]
 
     F --> S2A[STEP 2A - Incomplete fact detection<br/>ambiguous / missing comparison / omitted condition / other]
-    A --> S2B[STEP 2B - Word mapping<br/>longest common substring coverage]
+    A --> S2B[STEP 2B - Span coverage<br/>longest common substring matching]
     F --> S2B
     S2B --> SP[Uncovered spans]
     SP --> S2C[STEP 2C - Missing relation detection<br/>PDTB temporal + contingency]
@@ -333,7 +333,7 @@ verifact-lite/
 │   ├── prompts.py                every prompt, adapted from the paper's appendix
 │   ├── extractor.py              STEP 1
 │   ├── completeness.py           STEP 2A + detection ensemble
-│   ├── word_mapping.py           STEP 2B (Algorithm 1)
+│   ├── word_mapping.py           STEP 2B (span coverage)
 │   ├── missing_relation.py       STEP 2C + coverage check
 │   ├── refinement.py             STEP 3 / 3B + final fact assembly and dedup
 │   ├── retrieval.py              Wikipedia search, BM25 / TF-IDF ranking

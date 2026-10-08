@@ -1,4 +1,6 @@
-"""STEP 2B - word-mapping algorithm (paper Appendix A.4, Algorithm 1).
+"""STEP 2B - span coverage, following the official implementation
+(``data/convert_data_for_annotation.py``: ``longestCommonSubstring`` and
+``find_missing_spans``).
 
 For every extracted fact, find its longest common substring with the original
 response, mark those response characters as covered, and return the contiguous
