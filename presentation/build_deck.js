@@ -32,7 +32,7 @@ const { applyTheme } = require(path.join(
   "apply_theme.js"
 ));
 
-const OUT = path.join(__dirname, "VERIFACT-Lite-TTU.pptx");
+const OUT = path.join(__dirname, "VERIFACT_TTU.pptx");
 
 /* ----------------------------------------------------------------- palette */
 
@@ -1165,49 +1165,49 @@ s.addNotes(
   "[0:55] Point at the Agreement column, not the numbers. The claim is that the mechanism behaves as described; the claim is explicitly not that the numbers match."
 );
 
-/* 14 — proposed solutions  [0:55] */
+/* 14 — proposed changes to the method  [0:55] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
 eyebrow(s, "Future plans & next steps");
-title(s, "Six proposals, each aimed at a failure we measured");
-subtitle(s, "Two earlier proposals are already answered in the results; these six are not");
+title(s, "Six changes to VeriFact itself, each argued from a measurement");
+subtitle(s, "Gaps in the method as published, not fixes to our reimplementation");
 [
   [
-    "Faithfulness-guarded refinement",
-    "Accept a rewritten fact only when the original response entails it, checked by an NLI model.",
-    "Targets the worst failure we saw: the refiner wrote “There was NO demand for gold as jewelry”, inverting the claim.",
+    "Vote instead of union",
+    "Unions every positive detection, because one LLM agrees with annotators at only κ = 0.33.",
+    "Majority beat union on precision in all three configurations. For relations the union equalled Llama alone at every size — 51/51, 54/54, 21/21.",
+    false,
+  ],
+  [
+    "Gate refinement on faithfulness",
+    "Self-reflection rewrites a fact with no check that the response still supports it.",
+    "Ours inverted a claim: “There was NO demand for gold as jewelry.” The paper's 24.9% label-change rate cannot separate repairs from corruptions.",
+    false,
+  ],
+  [
+    "Refine against the evidence",
+    "Refines first and retrieves second, then reports precision falling without explaining it.",
+    "We measured the mechanism: undecided 146 → 185, precision −0.077. A longer claim needs more from one source.",
     true,
   ],
   [
-    "Refine, then keep the better verdict",
-    "Verify the original and the refined claim, and keep the refinement only when it does not turn a decided verdict into UNDECIDED.",
-    "Targets the central cost we measured: undecided 146 → 185, precision −0.077.",
+    "Make Algorithm 1 semantic",
+    "Word mapping marks coverage by longest common substring, so paraphrase reads as uncovered.",
+    "Coverage ran 0.55–0.59 across our answers and produced 73 candidate spans, some already expressed by an existing fact.",
     false,
   ],
   [
-    "Evidence-conditioned refinement",
-    "Retrieve first, then rewrite the claim against the evidence that exists, so refinement produces checkable claims.",
-    "Reverses the paper's order. Targets refined claims that no single Wikipedia sentence can support.",
-    false,
-  ],
-  [
-    "Disagreement-gated escalation",
-    "Run the small judges first and send only the facts they disagree on to a larger model.",
-    "Our data says the ensemble equalled Llama on relations at every size, so most second opinions are free to skip.",
-    false,
-  ],
-  [
-    "Judge-normalized reporting",
-    "Calibrate every judge on one fixed annotated probe set and report the incomplete rate relative to that anchor.",
-    "Makes 0.105 and 0.438 comparable instead of incommensurable. The proposal that generalises past this paper.",
+    "Calibrate the detector",
+    "Benchmarks 12 models against one fixed detector and compares the resulting rates directly.",
+    "On identical facts a 3B detector scores 0.105 and a 7B detector 0.438 — a 4.2× swing, larger than most model gaps the paper reports.",
     true,
   ],
   [
-    "Semantic word mapping",
-    "Replace the longest-common-substring coverage test with embedding coverage over the response.",
-    "Targets a lexical blind spot: a paraphrased relation currently counts as uncovered and is re-added as a fact.",
+    "Escalate only on disagreement",
+    "Runs three frontier models over every extracted fact, the dominant cost of the pipeline.",
+    "Cheap judges agree on most facts. Routing only the disputed ones to the large model targets the same detections for far fewer calls.",
     false,
   ],
-].forEach(([h, what, target, accent], i) => {
+].forEach(([h, paper, evidence, accent], i) => {
   const c = col(i % 3, 3);
   const y = i < 3 ? TOP : 4.25;
   card(s, {
@@ -1219,37 +1219,37 @@ subtitle(s, "Two earlier proposals are already answered in the results; these si
     panel: i >= 3,
     accent,
     heading: h,
-    headingSize: 13,
+    headingSize: 13.5,
   });
-  s.addText(what, {
+  s.addText("In the paper:  " + paper, {
     isTextBox: true,
-    objectName: "prop-w" + i,
+    objectName: "prop-p" + i,
     x: c.x + 0.28,
-    y: y + 0.82,
+    y: y + 0.68,
     w: c.w - 0.56,
-    h: 0.66,
-    fontSize: 11,
-    color: BODY,
-    fontFace: "Arial",
-    lineSpacingMultiple: 1.25,
-    margin: 0,
-  });
-  s.addText(target, {
-    isTextBox: true,
-    objectName: "prop-t" + i,
-    x: c.x + 0.28,
-    y: y + 1.5,
-    w: c.w - 0.56,
-    h: 0.66,
+    h: 0.6,
     fontSize: 10.5,
     color: MUTED,
     fontFace: "Arial",
-    lineSpacingMultiple: 1.25,
+    lineSpacingMultiple: 1.2,
+    margin: 0,
+  });
+  s.addText(evidence, {
+    isTextBox: true,
+    objectName: "prop-e" + i,
+    x: c.x + 0.28,
+    y: y + 1.36,
+    w: c.w - 0.56,
+    h: 0.86,
+    fontSize: 11,
+    color: BODY,
+    fontFace: "Arial",
+    lineSpacingMultiple: 1.2,
     margin: 0,
   });
 });
 s.addNotes(
-  "[0:55] Six proposals, each named with the failure it targets. Spend the time on the two in scarlet. Faithfulness-guarded refinement fixes the meaning flip we found by reading our own output; judge-normalized reporting is the one that generalises past this paper, because it makes two judges' scores comparable at all. Mention in passing that we found the verifier rubber-stamping — precision 0.92 with zero contradictions across 258 facts — until we required a verbatim quote from the evidence."
+  "[0:55] Six changes to the method, not to our code. Each card says what the paper does and what we measured that argues against it. Spend the time on the two in scarlet. Refining blind to the evidence explains a result the paper reports and never accounts for — precision falls after refinement. Calibrating the detector matters because the paper ranks 12 models on a metric that moves 4.2× when only the detector changes, which is larger than most of the gaps being ranked."
 );
 
 /* 15 — takeaways  [0:40] */
