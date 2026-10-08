@@ -1165,47 +1165,91 @@ s.addNotes(
   "[0:55] Point at the Agreement column, not the numbers. The claim is that the mechanism behaves as described; the claim is explicitly not that the numbers match."
 );
 
-/* 14 — future plans  [0:55] */
+/* 14 — proposed solutions  [0:55] */
 s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Talk" });
 eyebrow(s, "Future plans & next steps");
-title(s, "Every limitation points at a next step");
-subtitle(s, "Two were tested; the rest are proposals, labelled as such");
-card(s, {
-  name: "rubber",
-  x: M,
-  y: TOP,
-  w: W,
-  h: 1.3,
-  panel: true,
-  accent: true,
-  heading: "Found by breaking our own result: a 3B verifier rubber-stamps unless forced to quote",
-  headingSize: 13.5,
-  body:
-    "An earlier version reported precision 0.92 and zero contradictions across 258 facts, calling “Aluminium is the rarest metal in the Earth's crust” SUPPORTED with confidence 1.0. Requiring a verbatim quote from the evidence moved precision to 0.42 and made contradictions appear.",
-  bodySize: 12,
-});
-table(s, {
-  name: "fixes",
-  x: M,
-  y: 3.3,
-  w: W,
-  colW: [4.6, 4.5, 3.0],
-  rowH: 0.44,
-  fontSize: 12,
-  align: "left",
-  head: ["Limitation", "What would fix it", "Status"],
-  rows: [
-    ["Judges are 3B; metrics track the judge", "Stronger local judge (7–14B)", { text: "tested — 4.2× more found", emph: true }],
-    ["Union is dominated by the permissive judge", "Majority vote, or a third judge", { text: "tested — majority wins", emph: true }],
-    ["Undecided dominates — 146 of 258 verdicts", "Dense retrieval, query expansion, reranking", "not yet run"],
-    ["Refined facts are sometimes still flagged", "Iterative refinement, maximum two passes", "not yet run"],
-    ["12 questions, 86 facts, no human annotation", "Larger benchmark, human-verified references", "not yet run"],
-    ["Recall is itself judge-dependent (0.41 vs 0.28)", "Fixed entailment model across all runs", "not yet run"],
+title(s, "Six proposals, each aimed at a failure we measured");
+subtitle(s, "Two earlier proposals are already answered in the results; these six are not");
+[
+  [
+    "Faithfulness-guarded refinement",
+    "Accept a rewritten fact only when the original response entails it, checked by an NLI model.",
+    "Targets the worst failure we saw: the refiner wrote “There was NO demand for gold as jewelry”, inverting the claim.",
+    true,
   ],
+  [
+    "Refine, then keep the better verdict",
+    "Verify the original and the refined claim, and keep the refinement only when it does not turn a decided verdict into UNDECIDED.",
+    "Targets the central cost we measured: undecided 146 → 185, precision −0.077.",
+    false,
+  ],
+  [
+    "Evidence-conditioned refinement",
+    "Retrieve first, then rewrite the claim against the evidence that exists, so refinement produces checkable claims.",
+    "Reverses the paper's order. Targets refined claims that no single Wikipedia sentence can support.",
+    false,
+  ],
+  [
+    "Disagreement-gated escalation",
+    "Run the small judges first and send only the facts they disagree on to a larger model.",
+    "Our data says the ensemble equalled Llama on relations at every size, so most second opinions are free to skip.",
+    false,
+  ],
+  [
+    "Judge-normalized reporting",
+    "Calibrate every judge on one fixed annotated probe set and report the incomplete rate relative to that anchor.",
+    "Makes 0.105 and 0.438 comparable instead of incommensurable. The proposal that generalises past this paper.",
+    true,
+  ],
+  [
+    "Semantic word mapping",
+    "Replace the longest-common-substring coverage test with embedding coverage over the response.",
+    "Targets a lexical blind spot: a paraphrased relation currently counts as uncovered and is re-added as a fact.",
+    false,
+  ],
+].forEach(([h, what, target, accent], i) => {
+  const c = col(i % 3, 3);
+  const y = i < 3 ? TOP : 4.25;
+  card(s, {
+    name: "prop" + i,
+    x: c.x,
+    y,
+    w: c.w,
+    h: 2.3,
+    panel: i >= 3,
+    accent,
+    heading: h,
+    headingSize: 13,
+  });
+  s.addText(what, {
+    isTextBox: true,
+    objectName: "prop-w" + i,
+    x: c.x + 0.28,
+    y: y + 0.82,
+    w: c.w - 0.56,
+    h: 0.66,
+    fontSize: 11,
+    color: BODY,
+    fontFace: "Arial",
+    lineSpacingMultiple: 1.25,
+    margin: 0,
+  });
+  s.addText(target, {
+    isTextBox: true,
+    objectName: "prop-t" + i,
+    x: c.x + 0.28,
+    y: y + 1.5,
+    w: c.w - 0.56,
+    h: 0.66,
+    fontSize: 10.5,
+    color: MUTED,
+    fontFace: "Arial",
+    lineSpacingMultiple: 1.25,
+    margin: 0,
+  });
 });
-note(s, "Full ranked list in the appendix. Nothing in the 'not yet run' rows is claimed as a result.");
 s.addNotes(
-  "[0:55] Open by owning the 0.92 mistake — it shows the harness was itself tested. Then the table: the top two rows started as proposals on the first version of this talk and are now experiments with results. The rest are still proposals, and are labelled as such."
+  "[0:55] Six proposals, each named with the failure it targets. Spend the time on the two in scarlet. Faithfulness-guarded refinement fixes the meaning flip we found by reading our own output; judge-normalized reporting is the one that generalises past this paper, because it makes two judges' scores comparable at all. Mention in passing that we found the verifier rubber-stamping — precision 0.92 with zero contradictions across 258 facts — until we required a verbatim quote from the evidence."
 );
 
 /* 15 — takeaways  [0:40] */
