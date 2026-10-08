@@ -387,10 +387,6 @@ const CHART_BASE = {
  *   13      comparison with the paper
  *   14      future plans and next steps
  *   15      takeaways
- *   16      backup, not presented
- *
- * One backup slide follows for the question period; it is not part of the
- * 15 minutes and can be deleted without touching the talk.
  *
  * Numbers come from three runs over the SAME 12 generated answers:
  *   laptop-3B   Qwen2.5-3B primary, Qwen2.5-3B + Llama-3.2-3B judges
@@ -1265,85 +1261,6 @@ note(s, "Config-driven, fully cached, 59 unit tests  ·  all three runs reproduc
 s.addNotes(
   "[0:40] Close on points 3 and 4. Point 3 is the finding that generalises beyond this paper. Point 4 is where we corrected ourselves between versions of this talk, which is the honest thing to show. Leave the slide up for the questions."
 );
-
-/* --------------------------------------------------------------- backup
- * One slide, not presented. It answers the four questions the talk
- * invites; the detail behind it is in README.md and colab/RESULTS.md.
- * ---------------------------------------------------------------------- */
-
-pres.addSection({ title: "Backup" });
-
-/* 16 — backup for the question period */
-s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Backup" });
-eyebrow(s, "Backup — not presented");
-title(s, "Detail behind the four most likely questions");
-subtitle(s, "Word mapping, the uncontrolled run, what the refiner writes, and the engineering hazards");
-const cK1 = col(0, 2);
-const cK2 = col(1, 2);
-card(s, {
-  name: "bk-wm",
-  x: cK1.x,
-  y: TOP,
-  w: cK1.w,
-  h: 2.3,
-  heading: "How missing relations are found — Algorithm 1",
-  headingSize: 13.5,
-  body: [
-    "Take each fact's longest common substring with the response, mark those characters covered, collect the runs that stayed uncovered, and send them to the judges. Normalization is index-preserving, so offsets still point into the original answer.",
-    "Coverage 0.55–0.59.  73 candidate spans.  A fact is added only when the span expresses a temporal or contingency relation AND no single existing fact already captures it.",
-  ].join("\n"),
-  bodySize: 10.5,
-});
-card(s, {
-  name: "bk-b",
-  x: cK2.x,
-  y: TOP,
-  w: cK2.w,
-  h: 2.3,
-  panel: true,
-  heading: "Run B — the whole pipeline at 7B, extractor included",
-  headingSize: 13.5,
-  body: [
-    "Baseline 15.92 facts per answer against 21.50, incomplete rate 0.319, precision 0.5050. Refinement then costs −0.025 precision, against −0.118 in run A.",
-    "A stronger extractor writes fewer, coarser, self-contained facts, so there is less to repair — the trade the paper notes for VERIFY (18.5 facts per response against VeriFact's 32.3).",
-    "B changed four things at once, so it reads only against its own baseline.",
-  ].join("\n"),
-  bodySize: 10.5,
-});
-card(s, {
-  name: "bk-q",
-  x: cK1.x,
-  y: 4.25,
-  w: cK1.w,
-  h: 2.3,
-  panel: true,
-  accent: true,
-  heading: "What the 3B refiner actually writes",
-  headingSize: 13.5,
-  body: [
-    "Works — Q10:  “These substances are in the atmosphere.” becomes “… since the Montreal Protocol was signed.”   UNDECIDED → SUPPORTED.",
-    "Fails — Q01:  “There was demand for gold as jewelry.” becomes “There was NO demand …”. The hypothetical from the question was pasted into a fact stating the opposite.",
-    "Added relation — Q04:  “The experiment just before the explosion caused the reactor to exceed its design limits …”",
-  ].join("\n"),
-  bodySize: 10.5,
-});
-card(s, {
-  name: "bk-haz",
-  x: cK2.x,
-  y: 4.25,
-  w: cK2.w,
-  h: 2.3,
-  heading: "Engineering hazards behind these numbers",
-  headingSize: 13.5,
-  body: [
-    "GPU:  two 3B Q4_K_M judges do not fit in 4 GB, so the pipeline drives one judge over the whole fact list, then releases its weights — otherwise every call pays a ~20 s model load.",
-    "Retrieval:  Wikipedia rate-limits unauthenticated clients and failures are not cached, so without retries a 429 silently becomes “no evidence”. Fixed with retries and backoff.",
-    "Replay:  every LLM call is cached under hash(model + prompt + parameters).",
-  ].join("\n"),
-  bodySize: 10.5,
-});
-note(s, "Full write-up in README.md and colab/RESULTS.md. All three runs reproduce from one command with no GPU.");
-s.addNotes("Backup. Not part of the 15 minutes.");
 
 /* ------------------------------------------------------------------ write */
 
