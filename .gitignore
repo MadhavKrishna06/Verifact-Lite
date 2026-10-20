@@ -40,3 +40,8 @@ report/*.pdf
 
 # Report (kept local)
 report/
+
+# Presentation tooling (kept local)
+presentation/
+package.json
+package-lock.json
