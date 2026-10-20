@@ -37,3 +37,6 @@ presentation/*.pptx
 # Built report
 report/*.docx
 report/*.pdf
+
+# Report (kept local)
+report/
