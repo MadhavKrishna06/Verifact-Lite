@@ -30,3 +30,6 @@ presentation/render/
 # Colab bundle (regenerate with python colab/make_bundle.py)
 colab/verifact_lite_bundle.zip
 outputs_colab_*/
+
+# Generated deck
+presentation/*.pptx
