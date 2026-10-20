@@ -33,3 +33,7 @@ outputs_colab_*/
 
 # Generated deck
 presentation/*.pptx
+
+# Built report
+report/*.docx
+report/*.pdf
